@@ -143,18 +143,28 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Ball.cpp" />
+    <ClCompile Include="ChunkInterface.cpp" />
+    <ClCompile Include="CriticalMutex.cpp" />
+    <ClCompile Include="CriticalMutex.h" />
+    <ClCompile Include="Drawing.cpp" />
     <ClCompile Include="PhysicsChunk.cpp" />
     <ClCompile Include="PhysicsManager.cpp" />
     <ClCompile Include="Source.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Ball.h" />
+    <ClInclude Include="Border.h" />
+    <ClInclude Include="ChunkInterface.h" />
     <ClInclude Include="Collision.h" />
+    <ClInclude Include="Drawing.h" />
     <ClInclude Include="PhysicsChunk.h" />
     <ClInclude Include="PhysicsManager.h" />
   </ItemGroup>
   <ItemGroup>
     <Font Include="COMIC.TTF" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="circle.png" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
