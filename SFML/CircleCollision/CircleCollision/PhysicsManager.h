@@ -29,7 +29,7 @@ public:
 
 	sf::VertexArray circles;
 	sf::Texture circleTexture;
-	int MAX_THREADS = 12;
+	int MAX_THREADS = 16;
 	std::unordered_map<int, int> chunks_to_threads;
 	std::mutex mutex;
 

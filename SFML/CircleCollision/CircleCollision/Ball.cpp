@@ -14,10 +14,10 @@ Ball::Ball(int i, float r, float x, float y, float vx, float vy, float m, float 
 	id = i;
 	rad = r;
 	pos = sf::Vector2f(x, y);
-	vel = sf::Vector2f((((rand() % 2) - 0.5f) * 10.f), (((rand() % 2 - 0.5f)) * 10.f));
-	//acc = sf::Vector2f(((rand() % 2 - 0.5f) * 0.1f), ((rand() % 2 - 0.5f) * 0.1f));
+	//vel = sf::Vector2f((((rand() % 2) - 0.5f) * 1.f), (((rand() % 2 - 0.5f)) * 1.f));
+	//acc = sf::Vector2f(((rand() % 2 - 0.5f) * 0.5f), ((rand() % 2 - 0.5f) * 0.5f));
 	//vel = sf::Vector2f(vx, vy);
-	acc = sf::Vector2f(0, 0);
+	//acc = sf::Vector2f(0, 0);
 	mass = r * r * 3.14156f;
 	elasticity = e;
 	collisionStack = std::unordered_map<int, std::tuple<float, sf::Vector2f, sf::Vector2f>>();

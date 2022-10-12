@@ -42,6 +42,8 @@ public:
 
 	PhysicsChunk();
 	PhysicsChunk(int i, sf::Vector2f p, sf::Vector2f s, Border b);
+	static std::array<int, 4> place_ball(const shared_ptr<Ball>& ball, std::unordered_map<int, int>& chunk_ids, int chunk_size_x, int chunk_size_y, std::vector<
+	                                     std::shared_ptr<PhysicsChunk>>& chunks, bool bulk);
 	static void compounded_update(std::unique_ptr<CriticalMutex>& mutex);
 	void update(float deltaTime, ChunkInterface& ct);
 	void perpetual_update(float deltaTime, ChunkInterface& ct, std::mutex& m);
@@ -49,6 +51,8 @@ public:
 	                   shared_ptr<std::unordered_set<int>>& exiting_balls);
 	void add_ball(int id, const Ball& ball);
 	void add_ball(int id, const shared_ptr<Ball>& ball);
+	void add_ball(const shared_ptr<Ball>& ball);
+	void add_ball(const std::list<shared_ptr<Ball>>& ball);
 	void remove_ball(int id);
 	void draw(sf::RenderWindow& window);
 	bool isInside(sf::Vector2f pos);

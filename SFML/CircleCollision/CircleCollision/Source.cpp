@@ -21,17 +21,17 @@ int main() {
 	sf::View view = window->getDefaultView();
 
 	std::vector<shared_ptr<Ball>> balls = {};
-	for (int i = 0; i < 5000; i++) {
+	for (int i = 0; i < 2000; i++) {
 		std::cout << "Ball: " << i << std::endl;
-		Ball b(i, 25, rand() % (10000), rand() % (10000), 0.5f * (rand() % 2 - 0.5), 0.5f * (rand() % 2 - 0.5), 10, 0.9f);
+		Ball b(i, 5 + (rand() % 20), rand() % (5000), rand() % (5000), 0.5f * (rand() % 2 - 0.5), 0.5f * (rand() % 2 - 0.5), 10, 1.1f);
 		balls.push_back(std::make_shared<Ball>(b));
 	}
 
 
-	PhysicsManager p(10000, 10000, 200, 200);
+	PhysicsManager p(5000, 5000, 250, 250);
 	p.add_ball(balls);
 
-	float delta_time = 1.f/ 144;
+
 	auto update_thread = std::thread(&PhysicsManager::perpetual_update, &p);
 	//auto draw_thread = std::thread(&PhysicsManager::perpetual_draw, &p, std::ref(* window));
 	update_thread.detach();
@@ -86,9 +86,14 @@ int main() {
 				sf::FloatRect visibleArea(0.f, 0.f, event.size.width, event.size.height);
 				window->setView(sf::View(visibleArea));
 			}
+			if (sf::Keyboard::isKeyPressed(sf::Keyboard::R))
+			{
+				view = window->getDefaultView();
+			}
 			window->setView(view);
+			
 		}
-		Sleep(1);
+		//Sleep(1);
 		//auto start = std::chrono::high_resolution_clock::now();
 		////p.update();
 		//auto end = std::chrono::high_resolution_clock::now();
@@ -98,7 +103,7 @@ int main() {
 		//auto end = std::chrono::high_resolution_clock::now();
 		//std::cout << "Draw: " << std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() << std::endl;
 		window->display();
-		window->clear(sf::Color::White);
+		window->clear(sf::Color::Black);
 		//Sleep(100);
 	}
 	

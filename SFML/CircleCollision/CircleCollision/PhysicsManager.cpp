@@ -48,7 +48,7 @@ PhysicsManager::PhysicsManager(int w, int h, int cw, int ch)
 	chunk_threads = std::unordered_map<int, std::unique_ptr<CriticalMutex>>();
 
 	//std::mutex m;
-	int chunks_per_thread = PhysicsChunk::chunk_map.size()/MAX_THREADS;
+	int chunks_per_thread = (PhysicsChunk::chunk_map.size()/MAX_THREADS + 1);
 	CriticalMutex::all_frozen = true;
 
 	int count = 0;
@@ -196,19 +196,25 @@ void PhysicsManager::update()
 
 	auto start = std::chrono::high_resolution_clock::now();
 	auto exiting_balls = std::unordered_set<int>();
+	CriticalMutex::all_frozen = true;
 	for(auto i = chunk_threads.begin(); i != chunk_threads.end(); ++i)
 	{
-		//std::cout << i->first << std::endl;
-		exiting_balls.insert(i->second->exiting_balls.begin(), i->second->exiting_balls.end());
+		std::lock_guard<std::mutex> lock(*i->second->mutex);
+		if (!i->second->exiting_balls.empty()) {
+			//std::cout << i->first << std::endl;
+			exiting_balls.insert(i->second->exiting_balls.begin(), i->second->exiting_balls.end());
+			i->second->exiting_balls.clear();
+		}
 	}
+	CriticalMutex::all_frozen = false;
 	auto end = std::chrono::high_resolution_clock::now();
-	std::cout << "populating exiting balls: " << std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() << std::endl;
+	//std::cout << "populating exiting balls: " << std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() << std::endl;
 	
 	start = std::chrono::high_resolution_clock::now();
 	re_add_ball(exiting_balls);
-	//CriticalMutex::afalse;
 	end = std::chrono::high_resolution_clock::now();
-	std::cout << "re add ball: " << std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() << "\n\n" << std::endl;
+	//std::cout << "re add ball: " << std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() << "\n\n" << std::endl;
+	Sleep(1);
 }
 
 std::array<int, 4> PhysicsManager::place_ball(const int b)
@@ -282,17 +288,13 @@ void PhysicsManager::add_ball(std::vector<shared_ptr<Ball>> added_balls)
 		std::unique_lock<std::mutex> lock(*(chunk_threads[i.first]->mutex));
 		for (const int j : i.second)
 		{
+			const int k = chunk_add_map[j].front();
+			chunk_threads[i.first]->limbo_list.insert({ j, std::list<shared_ptr<Ball>>() });
 			while (!chunk_add_map[j].empty())
 			{
-				const int k = chunk_add_map[j].front();
-				chunk_threads[i.first]->chunk_interface[j]->limbo_list.push_back(balls[k]);
+				chunk_threads[i.first]->limbo_list[j].push_back(balls[chunk_add_map[j].front()]);
 				chunk_add_map[j].pop();
-			}
-		}
-		while (!(chunk_add_map[i.first]).empty())
-		{
-			chunk_threads[chunks_to_threads[i.first]]->chunk_interface[i.first]->limbo_list.push_back(balls[chunk_add_map[i.first].front()]);
-			chunk_add_map[i.first].pop();
+			}			
 		}
 	}
 	CriticalMutex::all_frozen = false;
@@ -351,6 +353,7 @@ void PhysicsManager::re_add_ball(std::unordered_set<int> added_balls)
 	start = std::chrono::high_resolution_clock::now();
 	for (const auto i : thread_add_map)
 	{
+		std::lock_guard<std::mutex> lock(*chunk_threads[i.first]->mutex);
 		for (auto j : i.second) {
 			if (chunk_threads[i.first]->limbo_list.count(j.first) <= 0)
 			{

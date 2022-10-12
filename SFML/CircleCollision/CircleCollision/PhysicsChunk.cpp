@@ -1,5 +1,8 @@
 
 #include "PhysicsChunk.h"
+
+#include <array>
+
 #include "Ball.h"
 #include "Collision.h"
 #include "ChunkInterface.h"
@@ -46,10 +49,70 @@ PhysicsChunk::PhysicsChunk(int i, sf::Vector2f p, sf::Vector2f s, Border b)
 		is_border = true;
 }
 
+std::array<int, 4> PhysicsChunk::place_ball(const shared_ptr<Ball>& ball, std::unordered_map<int, int>& chunk_ids, int chunk_size_x, int chunk_size_y, std::vector <std::shared_ptr<PhysicsChunk>>& chunks,  bool bulk)
+{
+	const auto chunk_x = static_cast<int>((ball->pos.x) / chunk_size_x);
+	const auto chunk_y = static_cast<int>((ball->pos.y) / chunk_size_y);
+	const int chunk = chunk_x + (chunk_y * 100000);
+	//chunk {0 0, 0 -1, -1 0, -1 -1}
+	auto out = std::array<int, 4>({ -1, -1, -1, -1 });
+	////map[chunk]->add_ball(b, ball);
+	if(bulk)
+	{
+		if (chunk_ids.count(chunk) > 0)
+		{
+			out[0] = chunk;
+			//chunks[chunk_ids[chunk]]->add_ball(ball);
+		}
+		if (chunk_ids.count(chunk - 1) > 0)
+		{
+			out[1] = chunk - 1;
+			//chunks[chunk_ids[chunk - 1]]->add_ball(ball);
+		}
+		if (chunk_ids.count(chunk - 100000) > 0)
+		{
+			out[2] = chunk - 100000;
+			//chunks[chunk_ids[chunk - 100000]]->add_ball(ball);
+		}
+		if (chunk_ids.count(chunk - 100001) > 0)
+		{
+			out[3] = chunk - 100001;
+			//chunks[chunk_ids[chunk - 100001]]->add_ball(ball);
+		}
+	} else
+	{
+		if (chunk_ids.count(chunk) > 0)
+		{
+			out[0] = chunk;
+			chunks[chunk_ids[chunk]]->add_ball(ball);
+		}
+		if (chunk_ids.count(chunk - 1) > 0)
+		{
+			out[1] = chunk - 1;
+			chunks[chunk_ids[chunk - 1]]->add_ball(ball);
+		}
+		if (chunk_ids.count(chunk - 100000) > 0)
+		{
+			out[2] = chunk - 100000;
+			chunks[chunk_ids[chunk - 100000]]->add_ball(ball);
+		}
+		if (chunk_ids.count(chunk - 100001) > 0)
+		{
+			out[3] = chunk - 100001;
+			chunks[chunk_ids[chunk - 100001]]->add_ball(ball);
+		}
+	}
+	
+	return out;
+}
+
 void PhysicsChunk::compounded_update(std::unique_ptr<CriticalMutex>& mutex)
 {
 	
 	std::vector<shared_ptr<PhysicsChunk>> chunks;
+	int chunk_x = 0;
+	int chunk_y = 0;
+
 	while(CriticalMutex::all_frozen)
 	{
 		Sleep(1);
@@ -60,36 +123,144 @@ void PhysicsChunk::compounded_update(std::unique_ptr<CriticalMutex>& mutex)
 		std::lock_guard<std::mutex> lock(chunk_map_mutex);
 		for (auto i : mutex->chunk_ids)
 		{
+			chunk_x = chunk_map[i]->size.x;
+			chunk_y = chunk_map[i]->size.y;
 			chunks.push_back(chunk_map[i]);
 		}
 	}
+	unordered_map<int, int> chunk_indicies = unordered_map<int, int>();
+	unordered_map<int, shared_ptr<Ball>> balls;
+	int c = 0;
+	for(auto i : chunks)
+	{
+		chunk_indicies[i->id] = c;
+		c++;
+	}
 	float delta_time = 1;
+	for (auto i : chunks)
+	{
+		balls.insert(i->balls.begin(), i->balls.end());
+	}
+
+	auto lock_time = 0;
+	auto limbo_list = 0;
+	auto chunk_updates = 0;
+	auto populating_exiting_balls = 0;
+
 	while (true)
 	{
+		//for (auto i : chunks)
+		//{
+		//	for(auto j : mutex->chunk_interface[i->id]->limbo_list)
+		//	{
+		//		balls.insert({j->id, j});
+		//	}
+		//}
+		
 		auto start = std::chrono::high_resolution_clock::now();
-		if (!mutex->all_frozen) {
-			if(!mutex->limbo_list.empty())
-			{
-				for(auto i : mutex->limbo_list)
-				{
-					mutex->chunk_interface[i.first]->limbo_list.splice(mutex->chunk_interface[i.first]->limbo_list.end(), i.second);
-				}
-			}
+		Sleep(1);
+		if (!CriticalMutex::all_frozen)
+		{
+			//auto start2 = std::chrono::high_resolution_clock::now();
 			std::unique_lock<std::mutex> lock(*mutex->mutex, std::defer_lock);
 			if (lock.try_lock()) {
+				//auto end2 = std::chrono::high_resolution_clock::now();
+				//lock_time = std::chrono::duration_cast<std::chrono::microseconds>(end2 - start2).count();
+
+
+				//start2 = std::chrono::high_resolution_clock::now();
+				if (!mutex->limbo_list.empty()) {
+					for (auto& i : mutex->limbo_list)
+					{
+						for (auto j : i.second) {
+							chunks[chunk_indicies[i.first]]->balls[j->id] = j;
+							balls[j->id] = j;
+						}
+					}
+					mutex->limbo_list.clear();
+				}
+				//end2 = std::chrono::high_resolution_clock::now();
+				//limbo_list = std::chrono::duration_cast<std::chrono::microseconds>(end2 - start2).count();
+
+
+				//start2 = std::chrono::high_resolution_clock::now();
+				int count = 0;
 				for (auto& i : chunks)
 				{
+					//count++;
+					//auto start2 = std::chrono::high_resolution_clock::now();
 					i->update(delta_time, *mutex->chunk_interface[i->id]);
+					//auto end2 = std::chrono::high_resolution_clock::now();
+					//std::cout << "Chunk " << count << ":" << std::chrono::duration_cast<std::chrono::nanoseconds>(end2 - start2).count() << std::endl;
 				}
+
+				//for (auto i = --chunks.end(); i != chunks.begin(); --i)
+				//{
+				//	(*i)->update(delta_time, *mutex->chunk_interface[(*i)->id]);
+				//}
+
+				//end2 = std::chrono::high_resolution_clock::now();
+				//chunk_updates = std::chrono::duration_cast<std::chrono::microseconds>(end2 - start2).count();
+
+
+				//start2 = std::chrono::high_resolution_clock::now();
+
+				std::unordered_map<int, unordered_map<int, shared_ptr<Ball>>> chunk_add_map;
+				for (auto& i : mutex->chunk_interface)
+				{
+					if (!i.second->exiting_balls.empty()) {
+
+						bool bulk = i.second->exiting_balls.size() > 100;
+						for (auto& j : i.second->exiting_balls)
+						{
+							if (balls[j] != nullptr) {
+								
+								auto arr = place_ball(balls[j], chunk_indicies, chunk_x, chunk_y, chunks, bulk);
+
+								if (arr[0] == -1 || arr[1] == -1 || arr[2] == -1 || arr[3] == -1)
+								{
+									mutex->exiting_balls.insert(j);
+									if (arr[0] == arr[1] && arr[1] == arr[2] && arr[2] == arr[3])
+									{
+										balls.erase(j);
+										continue;
+									}
+								}
+								if (bulk) {
+									for (auto k : arr)
+									{
+										if (k != -1)
+											chunk_add_map[chunk_indicies[k]].insert({ j, balls[j] });
+									}
+								}
+							}
+						}
+						if (bulk) {
+							for (auto& i : chunk_add_map)
+							{
+
+								chunks[i.first]->balls.insert(i.second.begin(), i.second.end());
+								//TODO: FIX ^^^^^
+							}
+						}
+						i.second->exiting_balls.clear();
+					}
+				}
+
+				//end2 = std::chrono::high_resolution_clock::now();
+				//populating_exiting_balls = std::chrono::duration_cast<std::chrono::microseconds>(end2 - start2).count();
+
+
 			}
-			for (auto& i : mutex->chunk_interface)
+			auto end = std::chrono::high_resolution_clock::now();
+			auto runtime = (float) std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
+			//std::cout << "Runtime: " << (int)runtime << std::endl;
+			delta_time = runtime / 6944.4;
+			if(delta_time > 100)
 			{
-				mutex->exiting_balls.insert(i.second->exiting_balls.begin(), i.second->exiting_balls.end());
+				//std::cout << "Runtime: " << runtime << "\n Lock Time: " << lock_time << "\n Limbo: " << limbo_list << "\n Updates: " << chunk_updates << "\n Exit: " << populating_exiting_balls << "\n\n" << std::endl;
 			}
 		}
-		auto end = std::chrono::high_resolution_clock::now();
-		auto runtime = (float) std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
-		delta_time = runtime / 6944.4;
 
 	}
 }
@@ -98,6 +269,7 @@ void PhysicsChunk::update(float deltaTime, ChunkInterface& ct)
 {
 	if (!CriticalMutex::all_frozen) {
 			if (!balls.empty()) {
+				auto start = std::chrono::high_resolution_clock::now();
 				auto exit = physics_update(deltaTime);
 				//std::cout << pos.x << ", " << pos.y << std::endl;
 				while (!exit.empty())
@@ -108,27 +280,32 @@ void PhysicsChunk::update(float deltaTime, ChunkInterface& ct)
 					exiting_balls.push_back(id);
 					exit.pop();
 				}
-				for (shared_ptr<Ball> b : ct.limbo_list)
-				{
-					add_ball(b->id, b);
-				}
+				//for (shared_ptr<Ball> b : ct.limbo_list)
+				//{
+				//	add_ball(b->id, b);
+				//}
 				for (auto b : exiting_balls)
 				{
 					ct.exiting_balls.insert(b);
 				}
 				exiting_balls.clear();
-			}
-
-
-			if (!ct.limbo_list.empty())
-			{
-				for (auto i : ct.limbo_list)
+				auto end = std::chrono::high_resolution_clock::now();
+				auto t = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
+				if(t > 100000)
 				{
-					add_ball(i->id, i);
+					//std::cout << "Chunk Update: " << t << std::endl;
 				}
-				ct.limbo_list.clear();
 			}
-			//std::cout << "Chunk Update: " << deltaTime << " microseconds" << "(" << balls.size() << " Balls)" << std::endl;
+
+
+			//if (!ct.limbo_list.empty())
+			//{
+			//	for (auto i : ct.limbo_list)
+			//	{
+			//		add_ball(i->id, i);
+			//	}
+			//	ct.limbo_list.clear();
+			//}
 		}
 }
 
@@ -279,5 +456,19 @@ void PhysicsChunk::add_ball(int id, const shared_ptr<Ball>& ball)
 {
 	balls.insert({ id, ball });
 }
+
+void PhysicsChunk::add_ball(const shared_ptr<Ball>& ball)
+{
+	balls.insert({ ball->id, ball });
+}
+
+void PhysicsChunk::add_ball(const std::list<shared_ptr<Ball>>& ball)
+{
+	for(auto b : ball)
+	{
+		add_ball(b);
+	}
+}
+
 
 
