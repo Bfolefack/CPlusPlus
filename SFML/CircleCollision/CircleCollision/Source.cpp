@@ -21,14 +21,14 @@ int main() {
 	sf::View view = window->getDefaultView();
 
 	std::vector<shared_ptr<Ball>> balls = {};
-	for (int i = 0; i < 2000; i++) {
+	for (int i = 0; i < 100000; i++) {
 		std::cout << "Ball: " << i << std::endl;
-		Ball b(i, 5 + (rand() % 20), rand() % (5000), rand() % (5000), 0.5f * (rand() % 2 - 0.5), 0.5f * (rand() % 2 - 0.5), 10, 1.1f);
+		Ball b(i, 20 + (rand() % 5) * (rand() % 5), rand() % (32000) + rand() % (32000), rand() % (32000) + rand() % (32000), 0.5f * (rand() % 2 - 0.5), 0.5f * (rand() % 2 - 0.5), 10, .99f);
 		balls.push_back(std::make_shared<Ball>(b));
 	}
 
 
-	PhysicsManager p(5000, 5000, 250, 250);
+	PhysicsManager p(64000, 64000, 250, 250);
 	p.add_ball(balls);
 
 
@@ -90,6 +90,16 @@ int main() {
 			{
 				view = window->getDefaultView();
 			}
+			if (sf::Keyboard::isKeyPressed(sf::Keyboard::B))
+			{
+				auto mousePos = window->mapPixelToCoords(sf::Mouse::getPosition(*window));
+				p.add_ball(Ball(0, 5 + (rand() % 5) * (rand() % 5) * (rand() % 5), mousePos.x, mousePos.y, 0.5f * (rand() % 2 - 0.5), 0.5f * (rand() % 2 - 0.5), 10, .99f));
+			}
+			if (sf::Keyboard::isKeyPressed(sf::Keyboard::Escape))
+			{
+				return 0;
+			}
+			
 			window->setView(view);
 			
 		}

@@ -125,20 +125,30 @@ void PhysicsManager::draw(sf::RenderWindow& window)
 		if (b.second != nullptr && is_inside_box(b.second->pos, window.getView().getCenter() - (window.getView().getSize()/2.f), window.getView().getSize())){
 			sf::Vertex tl;
 			tl.position = b.second->pos + sf::Vector2f(-b.second->rad, -b.second->rad);
-			tl.color = sf::Color::White;
+			
 			tl.texCoords = sf::Vector2f(0, 0);
 			sf::Vertex tr;
 			tr.position = b.second->pos + sf::Vector2f(b.second->rad, -b.second->rad);
 			tr.texCoords = sf::Vector2f(cTX, 0);
-			tr.color = sf::Color::White;
 			sf::Vertex br;
 			br.position = b.second->pos + sf::Vector2f(b.second->rad, b.second->rad);
 			br.texCoords = sf::Vector2f(cTX, cTY);
-			br.color = sf::Color::White;
 			sf::Vertex bl;
 			bl.position = b.second->pos + sf::Vector2f(-b.second->rad, b.second->rad);
 			bl.texCoords = sf::Vector2f(0, cTY);
-			bl.color = sf::Color::White;
+			if(b.second->active)
+			{
+				tl.color = sf::Color::Red;
+				tr.color = sf::Color::Red;
+				br.color = sf::Color::Red;
+				bl.color = sf::Color::Red;
+			} else
+			{
+				tl.color = sf::Color::White;
+				tr.color = sf::Color::White;
+				br.color = sf::Color::White;
+				bl.color = sf::Color::White;
+			}
 			circles.append(tl);
 			circles.append(tr);
 			circles.append(br);
@@ -367,6 +377,27 @@ void PhysicsManager::re_add_ball(std::unordered_set<int> added_balls)
 
 }
 
+void PhysicsManager::add_ball(Ball ball)
+{
+	ball.id = balls.size();
+	auto id = ball.id;
+	balls.insert({ id, std::make_shared<Ball>(ball) });
+	auto arr = place_ball(id);
+	for (auto i : arr)
+	{
+		if (i != -1)
+		{
+			auto thread = chunks_to_threads[i];
+			std::lock_guard<std::mutex> lock(*chunk_threads[thread]->mutex);
+			if (chunk_threads[thread]->limbo_list.count(i) <= 0)
+			{
+				chunk_threads[thread]->limbo_list[i] = std::list<shared_ptr<Ball>>();
+			}
+			chunk_threads[thread]->limbo_list[i].push_back(balls[id]);
+		}
+	}
+}
+
 //void PhysicsManager::add_ball(Ball ball)
 //{
 //	add_ball(std::make_shared<Ball>(ball));
@@ -467,6 +498,8 @@ void PhysicsManager::select_ball()
 
 void PhysicsManager::deselect_ball()
 {
+	if(selectedBall != nullptr)
+		selectedBall->active = true;
 	selectedBall = nullptr;
 }
 
@@ -487,6 +520,21 @@ void PhysicsManager::vel_deselect_ball()
 
 		std::lock_guard<std::mutex> lock(*velSelectedBall->mutex);
 		velSelectedBall->vel = ((velSelectedBall->pos - mousePos));
+		velSelectedBall->active = true;
+		auto arr = place_ball(velSelectedBall->id);
+		for (auto i : arr)
+		{
+			if (i != -1)
+			{
+				auto thread = chunks_to_threads[i];
+				//std::lock_guard<std::mutex> lock(*chunk_threads[thread]->mutex);
+				if (chunk_threads[thread]->limbo_list.count(i) <= 0)
+				{
+					chunk_threads[thread]->limbo_list[i] = std::list<shared_ptr<Ball>>();
+				}
+				chunk_threads[thread]->limbo_list[i].push_back(velSelectedBall);
+			}
+		}
 		velSelectedBall = nullptr;
 	}
 }

@@ -147,6 +147,7 @@ void PhysicsChunk::compounded_update(std::unique_ptr<CriticalMutex>& mutex)
 	auto chunk_updates = 0;
 	auto populating_exiting_balls = 0;
 
+
 	while (true)
 	{
 		//for (auto i : chunks)
@@ -158,7 +159,9 @@ void PhysicsChunk::compounded_update(std::unique_ptr<CriticalMutex>& mutex)
 		//}
 		
 		auto start = std::chrono::high_resolution_clock::now();
-		Sleep(1);
+		
+		Sleep(0.1f);
+		
 		if (!CriticalMutex::all_frozen)
 		{
 			//auto start2 = std::chrono::high_resolution_clock::now();
@@ -174,6 +177,7 @@ void PhysicsChunk::compounded_update(std::unique_ptr<CriticalMutex>& mutex)
 					{
 						for (auto j : i.second) {
 							chunks[chunk_indicies[i.first]]->balls[j->id] = j;
+							chunks[chunk_indicies[i.first]]->active = true;
 							balls[j->id] = j;
 						}
 					}
@@ -189,7 +193,8 @@ void PhysicsChunk::compounded_update(std::unique_ptr<CriticalMutex>& mutex)
 				{
 					//count++;
 					//auto start2 = std::chrono::high_resolution_clock::now();
-					i->update(delta_time, *mutex->chunk_interface[i->id]);
+					if(i->active)
+						i->update(delta_time, *mutex->chunk_interface[i->id]);
 					//auto end2 = std::chrono::high_resolution_clock::now();
 					//std::cout << "Chunk " << count << ":" << std::chrono::duration_cast<std::chrono::nanoseconds>(end2 - start2).count() << std::endl;
 				}
@@ -267,46 +272,25 @@ void PhysicsChunk::compounded_update(std::unique_ptr<CriticalMutex>& mutex)
 
 void PhysicsChunk::update(float deltaTime, ChunkInterface& ct)
 {
-	if (!CriticalMutex::all_frozen) {
-			if (!balls.empty()) {
-				auto start = std::chrono::high_resolution_clock::now();
-				auto exit = physics_update(deltaTime);
-				//std::cout << pos.x << ", " << pos.y << std::endl;
-				while (!exit.empty())
-				{
-					auto id = exit.front();
-					//std::cout << "exiting ball: " << id << std::endl;
-					balls.erase(id);
-					exiting_balls.push_back(id);
-					exit.pop();
-				}
-				//for (shared_ptr<Ball> b : ct.limbo_list)
-				//{
-				//	add_ball(b->id, b);
-				//}
-				for (auto b : exiting_balls)
-				{
-					ct.exiting_balls.insert(b);
-				}
-				exiting_balls.clear();
-				auto end = std::chrono::high_resolution_clock::now();
-				auto t = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
-				if(t > 100000)
-				{
-					//std::cout << "Chunk Update: " << t << std::endl;
-				}
+
+	if (!balls.empty()) {
+		if (!CriticalMutex::all_frozen) {
+			auto exit = physics_update(deltaTime);
+			while (!exit.empty())
+			{
+				auto id = exit.front();
+				balls.erase(id);
+				exiting_balls.push_back(id);
+				exit.pop();
 			}
-
-
-			//if (!ct.limbo_list.empty())
-			//{
-			//	for (auto i : ct.limbo_list)
-			//	{
-			//		add_ball(i->id, i);
-			//	}
-			//	ct.limbo_list.clear();
-			//}
+			
+			for (auto b : exiting_balls)
+			{
+				ct.exiting_balls.insert(b);
+			}
+			exiting_balls.clear();
 		}
+	}
 }
 
 void PhysicsChunk::perpetual_update(float deltaTime, ChunkInterface& ct, std::mutex& m)
@@ -320,25 +304,31 @@ void PhysicsChunk::perpetual_update(float deltaTime, ChunkInterface& ct, std::mu
 
 std::queue<int> PhysicsChunk::physics_update(float deltaTime)
 {
-	if (balls.empty())
+	if (balls.empty()) {
+		active = false;
 		return {};
-	
-	std::deque<shared_ptr<Ball>> temp_balls;
-	
-	for (auto b : balls) {
-		temp_balls.push_back(b.second);
 	}
+	
+	//std::deque<shared_ptr<Ball>> temp_balls;
+	//
+	//for (auto b : balls) {
+	//	temp_balls.push_back(b.second);
+	//}
+	bool act = false;
 	collision_stack = queue<Collision>();
-	for (const auto b1 : balls) {
+	for (const auto& b1 : balls) {
 		//std::cout << "[" << pos.x/(size.x/2) << ", " << pos.y/(size.y/2) << "]" << b1.first << std::endl;
 		//temp_balls.pop_front();
-		for (const auto b2 : temp_balls) {
-			auto coll = Ball::collide(b1.second, b2);
-			if (coll.collision)
-				collision_stack.push(coll);
+		if (b1.second->active) {
+			act = true;
+			for (const auto& b2 : balls) {
+				auto coll = Ball::collide(b1.second, b2.second);
+				if (coll.collision)
+					collision_stack.push(coll);
+			}
 		}
 	}
-
+	active = act;
 	/*resolve collisions*/ {
 		const auto temp = collision_stack;
 		while (!collision_stack.empty()) {
@@ -386,37 +376,41 @@ std::queue<int> PhysicsChunk::physics_update(float deltaTime)
 
 		if (is_border)
 			for (auto b1 : balls) {
-				if (b1.second->pos.x + b1.second->rad > (pos.x + size.x) && bounds.right) {
-					b1.second->vel.x *= -1 * b1.second->elasticity;
-					b1.second->pos.x = (pos.x + size.x) - b1.second->rad;
-					b1.second->collision = true;
-				}
-				if (b1.second->pos.x - b1.second->rad < (pos.x) && bounds.left) {
-					b1.second->vel.x *= -1 * b1.second->elasticity;
-					b1.second->pos.x = (pos.x) + b1.second->rad;
-					b1.second->collision = true;
-				}
-				if (b1.second->pos.y + b1.second->rad > (pos.y + size.y) && bounds.bottom) {
-					b1.second->vel.y *= -1 * b1.second->elasticity;
-					b1.second->pos.y = (pos.y + size.y) - b1.second->rad;
-					b1.second->collision = true;
-				}
-				if (b1.second->pos.y - b1.second->rad < (pos.y) && bounds.top) {
-					b1.second->vel.y *= -1 * b1.second->elasticity;
-					b1.second->pos.y = (pos.y) + b1.second->rad;
-					b1.second->collision = true;
+				if (b1.second->active) {
+					if (b1.second->pos.x + b1.second->rad > (pos.x + size.x) && bounds.right) {
+						b1.second->vel.x *= -1 * b1.second->elasticity;
+						b1.second->pos.x = (pos.x + size.x) - b1.second->rad;
+						b1.second->collision = true;
+					}
+					if (b1.second->pos.x - b1.second->rad < (pos.x) && bounds.left) {
+						b1.second->vel.x *= -1 * b1.second->elasticity;
+						b1.second->pos.x = (pos.x) + b1.second->rad;
+						b1.second->collision = true;
+					}
+					if (b1.second->pos.y + b1.second->rad > (pos.y + size.y) && bounds.bottom) {
+						b1.second->vel.y *= -1 * b1.second->elasticity;
+						b1.second->pos.y = (pos.y + size.y) - b1.second->rad;
+						b1.second->collision = true;
+					}
+					if (b1.second->pos.y - b1.second->rad < (pos.y) && bounds.top) {
+						b1.second->vel.y *= -1 * b1.second->elasticity;
+						b1.second->pos.y = (pos.y) + b1.second->rad;
+						b1.second->collision = true;
+					}
 				}
 			}
 		//std::cout << bounds.left << ", " << bounds.right << ", " << bounds.top << ", " << bounds.bottom << std::endl;
 
 		std::queue<int> temp_exit;
 		for (auto b : balls) {
-			std::unique_lock <std::mutex > b_lock(*b.second->mutex);
-			b.second->update();
-			if (((b.second->pos.x < pos.x) && !bounds.left) || ((b.second->pos.x > pos.x + size.x) && !bounds.right) || ((b.second->pos.y < pos.y) && !bounds.top) || ((b.second->pos.y > pos.y + size.y) && !bounds.bottom))
-			{
-				temp_exit.push(b.first);
-				//remove_ball(b.first);
+			if (b.second->active) {
+				std::unique_lock <std::mutex > b_lock(*b.second->mutex);
+				b.second->update();
+				if (((b.second->pos.x < pos.x) && !bounds.left) || ((b.second->pos.x > pos.x + size.x) && !bounds.right) || ((b.second->pos.y < pos.y) && !bounds.top) || ((b.second->pos.y > pos.y + size.y) && !bounds.bottom))
+				{
+					temp_exit.push(b.first);
+					//remove_ball(b.first);
+				}
 			}
 		}
 		return temp_exit;

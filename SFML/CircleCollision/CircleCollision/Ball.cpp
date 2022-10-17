@@ -17,7 +17,8 @@ Ball::Ball(int i, float r, float x, float y, float vx, float vy, float m, float 
 	//vel = sf::Vector2f((((rand() % 2) - 0.5f) * 1.f), (((rand() % 2 - 0.5f)) * 1.f));
 	//acc = sf::Vector2f(((rand() % 2 - 0.5f) * 0.5f), ((rand() % 2 - 0.5f) * 0.5f));
 	//vel = sf::Vector2f(vx, vy);
-	//acc = sf::Vector2f(0, 0);
+	acc = sf::Vector2f(0, 0);
+	active = true;
 	mass = r * r * 3.14156f;
 	elasticity = e;
 	collisionStack = std::unordered_map<int, std::tuple<float, sf::Vector2f, sf::Vector2f>>();
@@ -31,15 +32,17 @@ void Ball::update()
 	//std::unique_lock<std::mutex> lock(*mutex);
 	//auto start = std::chrono::high_resolution_clock::now();
 	//if (lock.try_lock()) {
+	bool collided = false;
 		if (!collisionStack.empty()) {
+			collided = true;
 			vel = sf::Vector2f(0, 0);
 			//auto ogVel = vel;
 			auto tempPos = sf::Vector2f(0, 0);
 			float smallestDot = 50;
-			if (collisionStack.empty())
-			{
-				std::cout << "empty" << std::endl;
-			}
+			//if (collisionStack.empty())
+			//{
+			//	std::cout << "empty" << std::endl;
+			//}
 			for (std::pair<const int, std::tuple<float, sf::Vector2<float>, sf::Vector2<float>>> i : collisionStack) {
 				delta_time = std::get<0>(i.second);
 				sf::Vector2f overlap = std::get<1>(i.second);
@@ -60,9 +63,18 @@ void Ball::update()
 			collision = false;
 		}
 		const auto vel_mag = magsq(vel);
-
-		if (vel_mag < magsq(acc) / 2.f) {
-			vel = sf::Vector2f(0, 0);
+		if (!(vel.x == 0 || vel.y == 0)) {
+			if (vel_mag < 0.01) {
+				vel = sf::Vector2f(0, 0);
+				if (!collided && magsq(acc) <= 0){
+					active = false;
+				}
+			}
+		} else
+		{
+			if (!collided && magsq(acc) <= 0) {
+				active = false;
+			}
 		}
 
 		//std::cout << acc.x << " , " << acc.y << "\n" << delta_time << "\n\n";
@@ -70,21 +82,21 @@ void Ball::update()
 
 		//std::cout << vel_mag << "\n";
 		//if(!collision)
-		vel += acc;
+		vel += acc * delta_time;
 		if (vel_mag > max_vel)
 		{
 			vel = (vel / sqrt(vel_mag)) * sqrt_max_vel;
 		}
 		pos += vel * delta_time;
 		//collision = false;
+	
 		vel *= .999f;
+		//rad = sqrt(vel_mag) + 5.f;
+		//mass = rad * rad * 3.14156f;
 
 
 
 		collisionStack.clear();
-		//auto end = std::chrono::high_resolution_clock::now();
-		//std::cout << "Ball Update: " << std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() << " microseconds" << std::endl;
-	//}
 }
 
 
@@ -153,6 +165,11 @@ Collision Ball::collide(const shared_ptr<Ball> ball1, const shared_ptr<Ball> bal
 		b2 = ball1;
 		b1 = ball2;
 	}
+
+	if (!(ball1->active || ball2->active))
+		return Collision();
+	b1->active = true;
+	b2->active = true;
 
 	Collision out;
 	out.collision = false;

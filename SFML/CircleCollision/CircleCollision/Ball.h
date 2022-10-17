@@ -23,6 +23,7 @@ public:
 	static constexpr float max_vel = 400;
 	static constexpr float sqrt_max_vel = 20;
 	bool collision;
+	bool active;
 
 	//Ball(const Ball&) = delete;
 	//Ball& operator= (const Ball&) = delete;

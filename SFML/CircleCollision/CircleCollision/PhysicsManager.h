@@ -26,10 +26,11 @@ public:
 	int chunk_height;
 	int height;
 	int width;
+	int next_ball;
 
 	sf::VertexArray circles;
 	sf::Texture circleTexture;
-	int MAX_THREADS = 16;
+	int MAX_THREADS = 1;
 	std::unordered_map<int, int> chunks_to_threads;
 	std::mutex mutex;
 

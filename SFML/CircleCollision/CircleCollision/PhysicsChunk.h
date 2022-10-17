@@ -39,6 +39,7 @@ public:
 	std::list<int> exiting_balls;
 	Border bounds;
 	bool is_border = false;
+	bool active = true;
 
 	PhysicsChunk();
 	PhysicsChunk(int i, sf::Vector2f p, sf::Vector2f s, Border b);
