@@ -336,8 +336,8 @@ std::queue<int> PhysicsChunk::physics_update(float deltaTime)
 
 			auto collision = collision_stack.front();
 			collision_stack.pop();
-			const auto b1 = actors[collision.ball1]->ball;
-			const auto b2 = actors[collision.ball2]->ball;
+			auto& b1 = actors[collision.ball1]->ball;
+			auto& b2 = actors[collision.ball2]->ball;
 
 			std::lock(*actors[collision.ball1]->mutex, *actors[collision.ball2]->mutex);
 			std::lock_guard<std::mutex> lck1(*actors[collision.ball1]->mutex, std::adopt_lock);
@@ -378,6 +378,7 @@ std::queue<int> PhysicsChunk::physics_update(float deltaTime)
 					(((tangent * tan_dp2) + (normal * m2)) * (b1.elasticity * b2.elasticity))
 				}
 			});
+			Sleep(0);
 			//auto end = std::chrono::high_resolution_clock::now();
 			//std::cout << "Double lock time: " << std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() << " microseconds" << std::endl;
 		//} else
@@ -455,10 +456,10 @@ bool PhysicsChunk::isInside(const sf::Vector2f obj_pos)
 	return (obj_pos.x > pos.x && obj_pos.x < pos.x + size.x && obj_pos.y > pos.y && obj_pos.y < pos.y + size.y);
 }
 
-void PhysicsChunk::add_actor(int id, const Actor& actor)
-{
-	actors.insert({id, std::make_shared<Actor>(actor) });
-}
+//void PhysicsChunk::add_actor(int id, const Actor& actor)
+//{
+//	actors.insert({id, std::make_shared<Actor>(actor) });
+//}
 
 void PhysicsChunk::add_actor(int id, const shared_ptr<Actor>& actor)
 {

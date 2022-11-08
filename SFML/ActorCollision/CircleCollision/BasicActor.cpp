@@ -1,5 +1,7 @@
 #include "BasicActor.h"
 
+#include <utility>
+
 void BasicActor::draw(){}
 
 BasicActor::BasicActor() : Actor()
@@ -7,6 +9,18 @@ BasicActor::BasicActor() : Actor()
 
 	ball.always_active = true;
 	for (float f = -3.14159265358979323846f; f < 3.14159265358979323846f; f += 3.14159265358979323846f/5)
+	{
+		ray_angles.push_back(f);
+		sighted_actors.push_back(nullptr);
+	}
+	sight_range = 300;
+}
+
+BasicActor::BasicActor(Ball& b) : Actor()
+{
+	ball = b;
+	ball.always_active = true;
+	for (float f = -3.14159265358979323846f; f < 3.14159265358979323846f; f += 3.14159265358979323846f / 5)
 	{
 		ray_angles.push_back(f);
 		sighted_actors.push_back(nullptr);

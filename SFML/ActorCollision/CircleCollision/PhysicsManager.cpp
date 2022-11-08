@@ -377,26 +377,27 @@ void PhysicsManager::re_add_actor(std::unordered_set<int> added_actors)
 
 }
 
-void PhysicsManager::add_actor(Actor& actor)
-{
-	actor.setId(actors.size());
-	auto id = actor.getId();
-	actors.insert({ id, std::make_shared<Actor>(actor) });
-	auto arr = place_actor(id);
-	for (auto i : arr)
-	{
-		if (i != -1)
-		{
-			auto thread = chunks_to_threads[i];
-			std::lock_guard<std::mutex> lock(*chunk_threads[thread]->mutex);
-			if (chunk_threads[thread]->limbo_list.count(i) <= 0)
-			{
-				chunk_threads[thread]->limbo_list[i] = std::list<shared_ptr<Actor>>();
-			}
-			chunk_threads[thread]->limbo_list[i].push_back(actors[id]);
-		}
-	}
-}
+//void PhysicsManager::add_actor(
+//  actor)
+//{
+//	actor.setId(actors.size());
+//	auto id = actor.getId();
+//	actors.insert({ id, std::make_shared<Actor>(actor) });
+//	auto arr = place_actor(id);
+//	for (auto i : arr)
+//	{
+//		if (i != -1)
+//		{
+//			auto thread = chunks_to_threads[i];
+//			std::lock_guard<std::mutex> lock(*chunk_threads[thread]->mutex);
+//			if (chunk_threads[thread]->limbo_list.count(i) <= 0)
+//			{
+//				chunk_threads[thread]->limbo_list[i] = std::list<shared_ptr<Actor>>();
+//			}
+//			chunk_threads[thread]->limbo_list[i].push_back(actors[id]);
+//		}
+//	}
+//}
 
 //void PhysicsManager::add_actor(Actor actor)
 //{

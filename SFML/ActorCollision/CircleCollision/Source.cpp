@@ -8,6 +8,8 @@
 #include <Windows.h>
 #include <thread>
 
+#include "BasicActor.h"
+#include "FlockActor.h"
 #include "PhysicsManager.h"
 
 using sf::RenderWindow;
@@ -23,12 +25,12 @@ int main() {
 	std::vector<shared_ptr<Actor>> actors = {};
 	for (int i = 0; i < 10000; i++) {
 		std::cout << "Actor: " << i << std::endl;
-		//Actor b(i, 20 + (rand() % 5) * (rand() % 5), rand() % (10000) + rand() % (10000), rand() % (10000) + rand() % (10000), 0.5f * (rand() % 2 - 0.5), 0.5f * (rand() % 2 - 0.5), 10, .99f);
-		//actors.push_back(std::make_shared<Actor>(b));
+		Ball b = Ball(5, rand() % 10000, rand() % 10000, 100, 0.9f);
+		actors.push_back(std::make_shared<BasicActor>(BasicActor(b)));
 	}
 
 
-	PhysicsManager p(20000, 20000, 250, 250);
+	PhysicsManager p(5000, 5000, 250, 250);
 	p.add_actor(actors);
 
 

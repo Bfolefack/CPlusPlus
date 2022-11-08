@@ -50,7 +50,7 @@ public:
 	void perpetual_update(float deltaTime, ChunkInterface& ct, std::mutex& m);
 	static void update(shared_ptr<PhysicsChunk> pc, float deltaTime,
 	                   shared_ptr<std::unordered_set<int>>& exiting_actors);
-	void add_actor(int id, const Actor& actor);
+	//void add_actor(int id, const Actor& actor);
 	void add_actor(int id, const shared_ptr<Actor>& actor);
 	void add_actor(const shared_ptr<Actor>& actor);
 	void add_actor(const std::list<shared_ptr<Actor>>& actor);

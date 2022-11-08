@@ -9,6 +9,19 @@
 using std::shared_ptr;
 
 
+Ball::Ball()
+{
+	id = -1;
+	rad = -1;
+	pos = sf::Vector2f();
+	vel = sf::Vector2f();
+	acc = sf::Vector2f();
+	active = false;
+	mass = -1;
+	elasticity = -1;
+	collisionStack = std::unordered_map<int, std::tuple<float, sf::Vector2f, sf::Vector2f>>();
+}
+
 Ball::Ball(int i, float r, float x, float y, float vx, float vy, float m, float e) {
 	id = i;
 	rad = r;
@@ -27,7 +40,7 @@ Ball::Ball(float r, float x, float y, float m, float e) {
 	id = -1;
 	rad = r;
 	pos = sf::Vector2f(x, y);
-	//vel = sf::Vector2f((((rand() % 2) - 0.5f) * 1.f), (((rand() % 2 - 0.5f)) * 1.f));
+	vel = sf::Vector2f((((rand() % 2) - 0.5f) * 1.f), (((rand() % 2 - 0.5f)) * 1.f));
 	//acc = sf::Vector2f(((rand() % 2 - 0.5f) * 0.5f), ((rand() % 2 - 0.5f) * 0.5f));
 	//vel = sf::Vector2f(vx, vy);
 	acc = sf::Vector2f(0, 0);
@@ -172,7 +185,7 @@ Collision Ball::collide(Ball& ball1, Ball& ball2) {
 		return collide(ball2, ball1);
 	}
 
-	if (!(ball1.active || ball2.active) || !(ball1.always_active || ball2.always_active))
+	if (!(ball1.active || ball2.active || ball1.always_active || ball2.always_active))
 		return Collision();
 	
 

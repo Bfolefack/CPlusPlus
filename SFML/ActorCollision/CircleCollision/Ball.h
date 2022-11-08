@@ -10,7 +10,7 @@ struct Collision;
 class Ball {
 public:
 	int id;
-	std::unordered_map<int, std::tuple<float, sf::Vector2f, sf::Vector2f>> collisionStack;
+	std::unordered_map<int, std::tuple<float, sf::Vector2<float>, sf::Vector2<float>>> collisionStack;
 	sf::Vector2f pos;
 	sf::Vector2f vel;
 	sf::Vector2f acc;

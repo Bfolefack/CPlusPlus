@@ -42,7 +42,7 @@ public:
 	std::array<int, 4> place_actor(int b);
 	void add_actor(std::vector<shared_ptr<Actor>> actors);
 	void re_add_actor(std::unordered_set<int> added_actors);
-	void add_actor(Actor& actor);
+	//void add_actor(Actor& actor);
 	void re_add_actor(int id);
 	void add_actor(shared_ptr<Actor> actor);
 	static void threaded_add_actor(std::mutex& mutex, std::list<shared_ptr<Actor>>& limbo_list, shared_ptr<Actor> actor);

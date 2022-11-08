@@ -6,6 +6,7 @@ class Actor
 protected:
 	int id;
 public:
+	//virtual ~Actor() = default;
 	bool for_deletion;
 	Ball ball;
 	int sprite_id;

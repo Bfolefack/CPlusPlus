@@ -8,6 +8,7 @@ public:
 	using Actor::Actor;
 
 	BasicActor();
+	BasicActor(Ball& b);
 	void update() override;
 	void draw() override;
 	//~BasicActor() override = default;
