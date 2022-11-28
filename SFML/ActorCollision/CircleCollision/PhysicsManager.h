@@ -27,16 +27,18 @@ public:
 	int height;
 	int width;
 	int next_actor;
+	static int global_selected_actor;
 
-	sf::VertexArray circles;
-	sf::Texture circleTexture;
-	int MAX_THREADS = 16;
+	std::vector<sf::VertexArray> vertex_arrays;
+	std::vector<sf::Texture> textures;
+	std::vector<std::unordered_set<int>> texture_groups;
+
+	int MAX_THREADS = 12;
 	std::unordered_map<int, int> chunks_to_threads;
 	std::mutex mutex;
 
-	PhysicsManager(int width, int height, int chunkWidth, int chunkHeight);
+	PhysicsManager(int width, int height, int chunk_width, int chunk_height);
 	static bool is_inside_box(sf::Vector2f pos, sf::Vector2f box_pos, sf::Vector2f box_size);
-	void perpetual_draw(sf::RenderWindow& window);
 	void draw(sf::RenderWindow& window);
 	void update();
 	std::array<int, 4> place_actor(int b);

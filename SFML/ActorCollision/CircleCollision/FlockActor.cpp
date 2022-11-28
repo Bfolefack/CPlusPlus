@@ -4,83 +4,136 @@
 
 void FlockActor::draw() {}
 
-FlockActor::FlockActor(int w, int h) : Actor()
+FlockActor::FlockActor(const Ball& b) : Actor(b)
 {
-	world_width = w;
-	world_height = h;
+	ball = b;
+	ball.active = true;
 	ball.always_active = true;
-	for (float f = -3.14159265358979323846f; f < 3.14159265358979323846f; f += 3.14159265358979323846f / 5)
+	ball.friction = 0.025f;
+	for (float f = -3.14159265358979323846f; f < 3.14159265358979323846f; f += 3.14159265358979323846f / 7)
 	{
 		ray_angles.push_back(f);
 		sighted_actors.push_back(nullptr);
 	}
-	ball.vel = { -2, 0 };
-	facing = ((rand() % 6283)) / 1000.f;
-	ball.rad = 25;
+
+	facing = ((rand() % 6284) - 3142) / 1000.f;
+	ball.vel = { cos(facing), sin(facing)};
+	ball.vel *= 0.05f;
+	ball.rad = 15;
+
+	actor_type = rand() % 5;
+
+	if (actor_type == 0)
+	{
+		sprite_id = 0;
+		sprite_color = sf::Color::Red;
+	}
+	else if (actor_type == 1)
+	{
+		sprite_id = 0;
+		sprite_color = sf::Color::Green;
+	}
+	else if (actor_type == 2)
+	{
+		sprite_id = 0;
+		sprite_color = sf::Color::Blue;
+	}
+	else if (actor_type == 3)
+	{
+		sprite_id = 0;
+		sprite_color = sf::Color::Yellow;
+	}
+	else if (actor_type == 4)
+	{
+		sprite_id = 0;
+		sprite_color = sf::Color::Magenta;
+	}
 	//std::cout << facing << std::endl;
-	sight_range = 100;
+	sprite_id = 0;
+	sight_range = 200;
 }
 
-sf::Vector2f& FlockActor::avoid_walls()
+void FlockActor::loop()
 {
-	sf::Vector2f out = {0, 0};
-	if(ball.pos.x < sight_range)
-		out += {1, 0};
-	if (ball.pos.x > world_width - sight_range)
-		out += {-1, 0};
-	if (ball.pos.y < sight_range)
-		out += {0, 1};
-	if (ball.pos.y > world_height - sight_range)
-		out += {0, -1};
-	return out;
-}
-
-float FlockActor::avoid_walls_angle()
-{
-	sf::Vector2f out = { 0, 0 };
-	if (ball.pos.x < sight_range)
-		out += {1, 0};
-	if (ball.pos.x > world_width - sight_range)
-		out += {-1, 0};
-	if (ball.pos.y < sight_range)
-		out += {0, 1};
-	if (ball.pos.y > world_height - sight_range)
-		out += {0, -1};
-	return atan2f(out.y, out.x);
+	if (ball.pos.x < ball.rad * 2)
+	{
+		ball.pos.x = world_size.x - 1;
+	}
+	if (ball.pos.y < ball.rad * 2)
+	{
+		ball.pos.y = world_size.y - 1;
+	}
+	if (ball.pos.x > world_size.x - ball.rad * 2)
+	{
+		ball.pos.x = 1;
+	}
+	if (ball.pos.y > world_size.y - ball.rad * 2)
+	{
+		ball.pos.y = 1;
+	}
 }
 
 void FlockActor::update()
 {
-	//std::lock_guard<std::mutex> lck(*mutex);
-	if(facing > 3.14159265358979323846f)
+	sf::Vector2f avoid = { 0, 0 };
+	std::lock_guard<std::mutex> lck(*mutex);
+	sf::Vector2f vel_sum = { 0, 0 };
+	
+	bool kill = true;
+	for (const auto& a : sighted_actors)
 	{
-		facing -= 2 * 3.14159265358979323846f;
-	}
-
-	if (facing < -3.14159265358979323846f)
-	{
-		facing += 2 * 3.14159265358979323846f;
-	}
-
-	sf::Vector2f pos_avg = { 0, 0 };
-	int count = 0;
-
-	for (auto& a : sighted_actors)
-	{
-		if(a != nullptr)
-		{
-			pos_avg += a->ball.pos;
-			count++;
+		if (a != nullptr) {
+			kill = false;
+			auto vec = a->ball.pos - ball.pos;
+			float dist = Ball::magsq(vec);
+			if (actor_type == a->actor_type) {
+				if (dist < 30 * 30)
+				{
+					avoid -= ((vec) * (1 - sqrt(dist) / sight_range));
+				}
+				else if (dist < 100 * 100 && dist > 45 * 45)
+				{
+					avoid += ((vec) * (1 - sqrt(dist) / sight_range)) * 5.f;
+				}
+			} else
+			{
+				avoid -= ((vec) * (1 - sqrt(dist) / sight_range));
+			}
+			vel_sum += a->ball.vel * (1 - sqrt(dist) / sight_range);
 		}
+		//std::cout << sqrt(Ball::magsq(avoid)) << std::endl;
 	}
-	if (count > 0) {
-		pos_avg /= (float)count;
-		pos_avg = (ball.pos - pos_avg) / 100.f;
-		facing += 0.1f * ((atan2(pos_avg.y, pos_avg.x) + avoid_walls_angle()) / 2.f);
-	}
-	if(rand() % 1000 < 2)
+	//if (kill)
+	//{
+	//	for_deletion = true;
+	//}
+	if(avoid.x != 0 && avoid.y != 0)
 	{
-		//for_deletion = true;
+		avoid /= sqrt(Ball::magsq(avoid));
+		avoid *= 0.05f;
 	}
-	ball.acc = sf::Vector2f( sin(facing), cos(facing) );
+	if (vel_sum.x != 0 && vel_sum.y != 0)
+	{
+		vel_sum /= sqrt(Ball::magsq(vel_sum));
+		vel_sum *= .05f;
+	}
+
+	auto steer = avoid + vel_sum + avoid_walls() * 0.05f;
+	if (steer.x != 0 && steer.y != 0)
+	{
+		steer /= sqrt(Ball::magsq(steer));
+		steer *= 0.05f;
+	} else
+	{
+		steer = { cos(facing), sin(facing) };
+	}
+	ball.acc += steer;
+	if(Ball::magsq(ball.acc) > 0.01)
+	{
+		ball.acc /= sqrt(Ball::magsq(ball.acc)) * 100;
+	}
+
+	facing = atan2(ball.vel.y, ball.vel.x);
+	//loop();
+	//ball.acc = { 1, 0 };
 }

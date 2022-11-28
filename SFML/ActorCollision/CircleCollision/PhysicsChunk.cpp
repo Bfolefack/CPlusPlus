@@ -159,19 +159,16 @@ void PhysicsChunk::compounded_update(std::unique_ptr<CriticalMutex>& mutex)
 		//}
 		
 		auto start = std::chrono::high_resolution_clock::now();
-		
-		Sleep(0.1f);
-		
 		if (!CriticalMutex::all_frozen)
 		{
-			//auto start2 = std::chrono::high_resolution_clock::now();
+			auto start2 = std::chrono::high_resolution_clock::now();
 			std::unique_lock<std::mutex> lock(*mutex->mutex, std::defer_lock);
 			if (lock.try_lock()) {
-				//auto end2 = std::chrono::high_resolution_clock::now();
-				//lock_time = std::chrono::duration_cast<std::chrono::microseconds>(end2 - start2).count();
+				auto end2 = std::chrono::high_resolution_clock::now();
+				lock_time = std::chrono::duration_cast<std::chrono::microseconds>(end2 - start2).count();
 
 
-				//start2 = std::chrono::high_resolution_clock::now();
+				start2 = std::chrono::high_resolution_clock::now();
 				if (!mutex->limbo_list.empty()) {
 					for (auto& i : mutex->limbo_list)
 					{
@@ -183,32 +180,43 @@ void PhysicsChunk::compounded_update(std::unique_ptr<CriticalMutex>& mutex)
 					}
 					mutex->limbo_list.clear();
 				}
-				//end2 = std::chrono::high_resolution_clock::now();
-				//limbo_list = std::chrono::duration_cast<std::chrono::microseconds>(end2 - start2).count();
+				end2 = std::chrono::high_resolution_clock::now();
+				limbo_list = std::chrono::duration_cast<std::chrono::microseconds>(end2 - start2).count();
 
 
-				//start2 = std::chrono::high_resolution_clock::now();
+				start2 = std::chrono::high_resolution_clock::now();
+
+				
+
 				int count = 0;
 				for (auto& i : chunks)
 				{
 					//count++;
 					//auto start2 = std::chrono::high_resolution_clock::now();
-					if(i->active)
+					//auto start2 = std::chrono::high_resolution_clock::now();
+					if(!i->actors.empty())
 						i->update(delta_time, *mutex->chunk_interface[i->id]);
+						
 					//auto end2 = std::chrono::high_resolution_clock::now();
 					//std::cout << "Chunk " << count << ":" << std::chrono::duration_cast<std::chrono::nanoseconds>(end2 - start2).count() << std::endl;
+				}
+
+				for (auto& a : actors)
+				{
+					if(a.second != nullptr)
+						a.second->update();
 				}
 
 				//for (auto i = --chunks.end(); i != chunks.begin(); --i)
 				//{
 				//	(*i)->update(delta_time, *mutex->chunk_interface[(*i)->id]);
 				//}
+				
+				end2 = std::chrono::high_resolution_clock::now();
+				chunk_updates = std::chrono::duration_cast<std::chrono::microseconds>(end2 - start2).count();
+				
 
-				//end2 = std::chrono::high_resolution_clock::now();
-				//chunk_updates = std::chrono::duration_cast<std::chrono::microseconds>(end2 - start2).count();
-
-
-				//start2 = std::chrono::high_resolution_clock::now();
+				start2 = std::chrono::high_resolution_clock::now();
 
 				std::unordered_map<int, unordered_map<int, shared_ptr<Actor>>> chunk_add_map;
 				for (auto& i : mutex->chunk_interface)
@@ -250,22 +258,32 @@ void PhysicsChunk::compounded_update(std::unique_ptr<CriticalMutex>& mutex)
 						}
 						i.second->exiting_actors.clear();
 					}
+					if(!i.second->for_deletion.empty())
+					{
+						for (auto b : i.second->for_deletion)
+						{
+							if (actors[b] != nullptr) {
+								actors.erase(b);
+								mutex->for_deletion.insert(b);
+							}
+						}
+					}
 				}
 
-				//end2 = std::chrono::high_resolution_clock::now();
-				//populating_exiting_actors = std::chrono::duration_cast<std::chrono::microseconds>(end2 - start2).count();
+				end2 = std::chrono::high_resolution_clock::now();
+				populating_exiting_actors = std::chrono::duration_cast<std::chrono::microseconds>(end2 - start2).count();
 
 
 			}
-			auto end = std::chrono::high_resolution_clock::now();
-			auto runtime = (float) std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
-			//std::cout << "Runtime: " << (int)runtime << std::endl;
-			delta_time = runtime / 6944.4;
-			if(delta_time > 100)
-			{
-				//std::cout << "Runtime: " << runtime << "\n Lock Time: " << lock_time << "\n Limbo: " << limbo_list << "\n Updates: " << chunk_updates << "\n Exit: " << populating_exiting_actors << "\n\n" << std::endl;
-			}
-		}
+		}	
+		Sleep(.1f);
+		auto end = std::chrono::high_resolution_clock::now();
+		auto runtime = (float)std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
+		delta_time = runtime / 6944.4;
+		if (delta_time > 1.f)
+			delta_time = 1.f;
+		//if (delta_time > 10)
+			//std::cout << "Lock Time: " << lock_time << "\n" << "Limbo List: " << limbo_list << "\n" << "Chunk Updates: " << chunk_updates << "\n" << "Populating Exiting Actors: " << populating_exiting_actors << "\n" << "Total: " << runtime << "\n" << "Delta Time: " << delta_time << "\n" << std::endl;
 
 	}
 }
@@ -275,13 +293,22 @@ void PhysicsChunk::update(float deltaTime, ChunkInterface& ct)
 
 	if (!actors.empty()) {
 		if (!CriticalMutex::all_frozen) {
-			auto exit = physics_update(deltaTime);
+			auto temp = physics_update(deltaTime);
+			auto exit = temp.first;
+			auto for_deletion = temp.second;
 			while (!exit.empty())
 			{
 				auto id = exit.front();
 				actors.erase(id);
 				exiting_actors.push_back(id);
 				exit.pop();
+			}
+
+			while (!for_deletion.empty())
+			{
+				actors.erase(for_deletion.front());
+				ct.for_deletion.insert(for_deletion.front());
+				for_deletion.pop();
 			}
 			
 			for (auto b : exiting_actors)
@@ -290,19 +317,22 @@ void PhysicsChunk::update(float deltaTime, ChunkInterface& ct)
 			}
 			exiting_actors.clear();
 		}
+	} else
+	{
+		active = false;
 	}
 }
 
-void PhysicsChunk::perpetual_update(float deltaTime, ChunkInterface& ct, std::mutex& m)
+void PhysicsChunk::perpetual_update(float delta_time, ChunkInterface& ct, std::mutex& m)
 {
 	while (true) {
 		Sleep(1);
-		update(deltaTime, ct);
+		update(delta_time, ct);
 	}
 }
 
 
-std::queue<int> PhysicsChunk::physics_update(float deltaTime)
+std::pair<std::queue<int>, std::queue<int>> PhysicsChunk::physics_update(float delta_time)
 {
 	if (actors.empty()) {
 		active = false;
@@ -364,7 +394,7 @@ std::queue<int> PhysicsChunk::physics_update(float deltaTime)
 			b1.collisionStack.insert({
 				b2.id,
 				{
-					(deltaTime < 1 ? deltaTime : 1),
+					(delta_time < 10 ? delta_time : 10),
 					collision.ball1_overlap,
 					(((tangent * tan_dp1) + (normal * m1)) * (b1.elasticity * b2.elasticity))
 				}
@@ -373,12 +403,11 @@ std::queue<int> PhysicsChunk::physics_update(float deltaTime)
 			b2.collisionStack.insert({
 				b1.id,
 				{
-					(deltaTime < 1 ? deltaTime : 1),
+					(delta_time < 10 ? delta_time : 10),
 					collision.ball2_overlap,
 					(((tangent * tan_dp2) + (normal * m2)) * (b1.elasticity * b2.elasticity))
 				}
 			});
-			Sleep(0);
 			//auto end = std::chrono::high_resolution_clock::now();
 			//std::cout << "Double lock time: " << std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() << " microseconds" << std::endl;
 		//} else
@@ -391,48 +420,52 @@ std::queue<int> PhysicsChunk::physics_update(float deltaTime)
 
 		if (is_border)
 			for (auto b1 : actors) {
-				if (b1.second->ball.active) {
-					if (b1.second->ball.pos.x + b1.second->ball.rad > (pos.x + size.x) && bounds.right) {
+				if (b1.second->ball.active || b1.second->ball.always_active) {
+					if (b1.second->ball.pos.x + b1.second->ball.rad * 2 > (pos.x + size.x) && bounds.right) {
 						b1.second->ball.vel.x *= -1 * b1.second->ball.elasticity;
-						b1.second->ball.pos.x = (pos.x + size.x) - b1.second->ball.rad;
-						b1.second->ball.collision = true;
+						b1.second->ball.pos.x = (pos.x + size.x) - b1.second->ball.rad * 2;
 					}
-					if (b1.second->ball.pos.x - b1.second->ball.rad < (pos.x) && bounds.left) {
+					if (b1.second->ball.pos.x - b1.second->ball.rad * 2 < (pos.x) && bounds.left) {
 						b1.second->ball.vel.x *= -1 * b1.second->ball.elasticity;
-						b1.second->ball.pos.x = (pos.x) + b1.second->ball.rad;
-						b1.second->ball.collision = true;
+						b1.second->ball.pos.x = (pos.x) + b1.second->ball.rad * 2;
 					}
-					if (b1.second->ball.pos.y + b1.second->ball.rad > (pos.y + size.y) && bounds.bottom) {
+					if (b1.second->ball.pos.y + b1.second->ball.rad * 2 > (pos.y + size.y) && bounds.bottom) {
 						b1.second->ball.vel.y *= -1 * b1.second->ball.elasticity;
-						b1.second->ball.pos.y = (pos.y + size.y) - b1.second->ball.rad;
-						b1.second->ball.collision = true;
+						b1.second->ball.pos.y = (pos.y + size.y) - b1.second->ball.rad * 2;
 					}
-					if (b1.second->ball.pos.y - b1.second->ball.rad < (pos.y) && bounds.top) {
+					if (b1.second->ball.pos.y - b1.second->ball.rad * 2 < (pos.y) && bounds.top) {
 						b1.second->ball.vel.y *= -1 * b1.second->ball.elasticity;
-						b1.second->ball.pos.y = (pos.y) + b1.second->ball.rad;
-						b1.second->ball.collision = true;
+						b1.second->ball.pos.y = (pos.y) + b1.second->ball.rad * 2;
 					}
 				}
 			}
 		//std::cout << bounds.left << ", " << bounds.right << ", " << bounds.top << ", " << bounds.bottom << std::endl;
 
 		std::queue<int> temp_exit;
+		std::queue<int> for_deletion;
+		ray_update_buffer += delta_time;
+		if (ray_update_buffer > 10.f)
+			ray_update_buffer = 0;
 		for (auto b : actors) {
-			if (b.second->ball.active) {
+			if (b.second->ball.active || b.second->ball.always_active) {
 				std::unique_lock <std::mutex > b_lock(*b.second->mutex);
-				b.second->ball.update();
+				if (ray_update_buffer == 0.f) 
+					b.second->ray_cast(actors);
+				b.second->ball.update(delta_time);
 				if (((b.second->ball.pos.x < pos.x) && !bounds.left) || ((b.second->ball.pos.x > pos.x + size.x) && !bounds.right) || ((b.second->ball.pos.y < pos.y) && !bounds.top) || ((b.second->ball.pos.y > pos.y + size.y) && !bounds.bottom))
 				{
 					temp_exit.push(b.first);
 					//remove_actor(b.first);
 				}
+				if(b.second->for_deletion)
+				{
+					for_deletion.push(b.first);
+				}
 			}
 		}
-		return temp_exit;
+		return { temp_exit, for_deletion };
 	}
-	return {};
-	
-	
+	return {};	
 }
 
 
@@ -463,21 +496,21 @@ bool PhysicsChunk::isInside(const sf::Vector2f obj_pos)
 
 void PhysicsChunk::add_actor(int id, const shared_ptr<Actor>& actor)
 {
-	actors.insert({ id, actor });
+	if(actor != nullptr)
+		actors.insert({ id, actor });
 }
 
 void PhysicsChunk::add_actor(const shared_ptr<Actor>& actor)
 {
-	actors.insert({ actor->getId(), actor});
+	if (actor != nullptr)
+		actors.insert({ actor->getId(), actor});
 }
 
 void PhysicsChunk::add_actor(const std::list<shared_ptr<Actor>>& actor)
 {
 	for(auto b : actor)
 	{
-		add_actor(b);
+		if (b != nullptr)
+			add_actor(b);
 	}
 }
-
-
-

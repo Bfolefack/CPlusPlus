@@ -6,6 +6,8 @@
 #include <unordered_map>
 #include <iostream>
 
+#include "PhysicsManager.h"
+
 using std::shared_ptr;
 
 
@@ -19,24 +21,13 @@ Ball::Ball()
 	active = false;
 	mass = -1;
 	elasticity = -1;
+	friction = 0;
+	always_active = false;
 	collisionStack = std::unordered_map<int, std::tuple<float, sf::Vector2f, sf::Vector2f>>();
 }
 
-Ball::Ball(int i, float r, float x, float y, float vx, float vy, float m, float e) {
-	id = i;
-	rad = r;
-	pos = sf::Vector2f(x, y);
-	//vel = sf::Vector2f((((rand() % 2) - 0.5f) * 1.f), (((rand() % 2 - 0.5f)) * 1.f));
-	//acc = sf::Vector2f(((rand() % 2 - 0.5f) * 0.5f), ((rand() % 2 - 0.5f) * 0.5f));
-	//vel = sf::Vector2f(vx, vy);
-	acc = sf::Vector2f(0, 0);
-	active = true;
-	mass = r * r * 3.14156f;
-	elasticity = e;
-	collisionStack = std::unordered_map<int, std::tuple<float, sf::Vector2f, sf::Vector2f>>();
-}
 
-Ball::Ball(float r, float x, float y, float m, float e) {
+Ball::Ball(float r, float x, float y, float m, float e, float f) {
 	id = -1;
 	rad = r;
 	pos = sf::Vector2f(x, y);
@@ -45,83 +36,80 @@ Ball::Ball(float r, float x, float y, float m, float e) {
 	//vel = sf::Vector2f(vx, vy);
 	acc = sf::Vector2f(0, 0);
 	active = true;
+	always_active = false;
 	mass = r * r * 3.14156f;
 	elasticity = e;
+	friction = f;
 	collisionStack = std::unordered_map<int, std::tuple<float, sf::Vector2f, sf::Vector2f>>();
 }
 
-void Ball::update()
+void Ball::update(const float& delta_time)
 {
 	//if (!collision)
 	//acc = sf::Vector2f(0, 0);
 	//std::unique_lock<std::mutex> lock(*mutex);
 	//auto start = std::chrono::high_resolution_clock::now();
 	//if (lock.try_lock()) {
-	bool collided = false;
-		if (!collisionStack.empty()) {
-			collided = true;
+	if(id == PhysicsManager::global_selected_actor)
+	{
+		std::cout << "Ball " << id << " is selected" << std::endl;
+		PhysicsManager::global_selected_actor = -1;
+	}
+	if (!collisionStack.empty()) {
+		
+		vel = sf::Vector2f(0, 0);
+		//auto ogVel = vel;
+		auto tempPos = sf::Vector2f(0, 0);
+		float smallestDot = 50;
+
+		float delta_time_sum = 0;
+
+		for (std::pair<const int, std::tuple<float, sf::Vector2<float>, sf::Vector2<float>>> i : collisionStack) {
+			sf::Vector2f overlap = std::get<1>(i.second);
+			sf::Vector2f v = std::get<2>(i.second);
+			const auto dot = overlap.x * acc.x + overlap.y * acc.y;
+			if (dot < smallestDot)
+			{
+				tempPos = overlap - acc;
+				smallestDot = dot;
+			}
+			vel = v;
+		}
+		pos += tempPos; // (static_cast<float>(collisionStack.size())) ;
+		//vel /= static_cast<float>(collisionStack.size());
+	}
+	const auto vel_mag = magsq(vel);
+	if (!(vel.x == 0 || vel.y == 0)) {
+		if (vel_mag < 0.01 && !always_active) {
 			vel = sf::Vector2f(0, 0);
-			//auto ogVel = vel;
-			auto tempPos = sf::Vector2f(0, 0);
-			float smallestDot = 50;
-			//if (collisionStack.empty())
-			//{
-			//	std::cout << "empty" << std::endl;
-			//}
-			for (std::pair<const int, std::tuple<float, sf::Vector2<float>, sf::Vector2<float>>> i : collisionStack) {
-				delta_time = std::get<0>(i.second);
-				sf::Vector2f overlap = std::get<1>(i.second);
-				sf::Vector2f v = std::get<2>(i.second);
-				const auto dot = overlap.x * acc.x + overlap.y * acc.y;
-				if (dot < smallestDot)
-				{
-					tempPos = overlap - acc;
-					smallestDot = dot;
-				}
-				vel = v;
-			}
-			pos += tempPos; // (static_cast<float>(collisionStack.size())) ;
-			//vel /= static_cast<float>(collisionStack.size());
 		}
-		else
-		{
-			collision = false;
+	} else
+	{
+		if (magsq(acc) <= 0 && !always_active) {
+			active = false;
 		}
-		const auto vel_mag = magsq(vel);
-		if (!(vel.x == 0 || vel.y == 0)) {
-			if (vel_mag < 0.01) {
-				vel = sf::Vector2f(0, 0);
-				if (!collided && magsq(acc) <= 0){
-					active = false;
-				}
-			}
-		} else
-		{
-			if (!collided && magsq(acc) <= 0) {
-				active = false;
-			}
-		}
+	}
 
-		//std::cout << acc.x << " , " << acc.y << "\n" << delta_time << "\n\n";
+	//std::cout << acc.x << " , " << acc.y << "\n" << delta_time << "\n\n";
 
 
-		//std::cout << vel_mag << "\n";
-		//if(!collision)
-		vel += acc * delta_time;
-		if (vel_mag > max_vel)
-		{
-			vel = (vel / sqrt(vel_mag)) * sqrt_max_vel;
-		}
-		pos += vel * delta_time;
-		//collision = false;
-	
-		vel *= .999f;
-		//rad = sqrt(vel_mag) + 5.f;
-		//mass = rad * rad * 3.14156f;
+	//std::cout << vel_mag << "\n";
+	//if(!collision)
+	vel += acc * delta_time;
+	if (vel_mag > max_vel)
+	{
+		vel = (vel / sqrt(vel_mag)) * sqrt_max_vel;
+	}
+	pos += vel * delta_time;
+	//collision = false;
 
+	vel *= (1 - friction * delta_time);
+	//rad = sqrt(vel_mag) + 5.f;
+	//mass = rad * rad * 3.14156f;
 
+	//std::cout << delta_time << "\n";
 
-		collisionStack.clear();
+	collisionStack.clear();
 }
 
 

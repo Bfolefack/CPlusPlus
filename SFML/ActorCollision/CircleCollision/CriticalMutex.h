@@ -18,6 +18,7 @@ struct CriticalMutex
 
 	std::unordered_map<int, std::list<std::shared_ptr<Actor>>> limbo_list;
 	std::unordered_set<int> exiting_actors;
+	std::unordered_set<int> for_deletion;
 
 	static std::atomic<bool> all_frozen;
 

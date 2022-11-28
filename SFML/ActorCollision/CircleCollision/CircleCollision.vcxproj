@@ -152,7 +152,6 @@
     <ClCompile Include="FlockActor.cpp" />
     <ClCompile Include="PhysicsChunk.cpp" />
     <ClCompile Include="PhysicsManager.cpp" />
-    <ClCompile Include="Ray.cpp" />
     <ClCompile Include="Source.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -166,13 +165,13 @@
     <ClInclude Include="FlockActor.h" />
     <ClInclude Include="PhysicsChunk.h" />
     <ClInclude Include="PhysicsManager.h" />
-    <ClInclude Include="Ray.h" />
   </ItemGroup>
   <ItemGroup>
     <Font Include="COMIC.TTF" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="circle.png" />
+    <Image Include="chevron.png" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

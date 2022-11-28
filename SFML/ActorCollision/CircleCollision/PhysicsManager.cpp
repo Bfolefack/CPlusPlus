@@ -14,6 +14,7 @@
 using std::shared_ptr;
 using std::unordered_map;
 
+int PhysicsManager::global_selected_actor = -1;
 
 
 PhysicsManager::PhysicsManager(int w, int h, int cw, int ch)
@@ -41,9 +42,17 @@ PhysicsManager::PhysicsManager(int w, int h, int cw, int ch)
 	selectedActor = nullptr;
 	velSelectedActor = nullptr;
 	mousePos = sf::Vector2f(0, 0);
-	circles = sf::VertexArray(sf::Quads, 0);
-	circleTexture.loadFromFile("circle.png");
-	circleTexture.setSmooth(true);
+
+	textures.push_back(sf::Texture());
+	textures.push_back(sf::Texture());
+	textures[0].loadFromFile("chevron.png");
+	textures[1].loadFromFile("circle.png");
+
+	for (int i = 0; i < 2; ++i)
+	{
+		texture_groups.push_back(std::unordered_set<int>());
+		vertex_arrays.push_back(sf::VertexArray(sf::Quads));
+	}
 	chunks_to_threads = std::unordered_map<int, int>();
 	chunk_threads = std::unordered_map<int, std::unique_ptr<CriticalMutex>>();
 
@@ -115,49 +124,99 @@ bool PhysicsManager::is_inside_box(sf::Vector2f pos, sf::Vector2f box_pos, sf::V
 void PhysicsManager::draw(sf::RenderWindow& window) 
 {
 
-	//std::lock_guard<std::mutex> lock(mutex);
-	circles = sf::VertexArray(sf::Quads, 400);
-	const auto cTX = circleTexture.getSize().x;
-	const auto cTY = circleTexture.getSize().y;
+
+	auto zoom = window.getView().getSize().x / window.getDefaultView().getSize().x;
+	float min_size = 2;
 	//std::cout << circleTexture.getSize().x << ", " << circleTexture.getSize().y << std::endl;
-	for (const auto b : actors)
-	{
-		if (b.second != nullptr && is_inside_box(b.second->ball.pos, window.getView().getCenter() - (window.getView().getSize()/2.f), window.getView().getSize())){
-			sf::Vertex tl;
-			tl.position = b.second->ball.pos + sf::Vector2f(-b.second->ball.rad, -b.second->ball.rad);
-			
-			tl.texCoords = sf::Vector2f(0, 0);
-			sf::Vertex tr;
-			tr.position = b.second->ball.pos + sf::Vector2f(b.second->ball.rad, -b.second->ball.rad);
-			tr.texCoords = sf::Vector2f(cTX, 0);
-			sf::Vertex br;
-			br.position = b.second->ball.pos + sf::Vector2f(b.second->ball.rad, b.second->ball.rad);
-			br.texCoords = sf::Vector2f(cTX, cTY);
-			sf::Vertex bl;
-			bl.position = b.second->ball.pos + sf::Vector2f(-b.second->ball.rad, b.second->ball.rad);
-			bl.texCoords = sf::Vector2f(0, cTY);
-			if(b.second->ball.active)
-			{
-				tl.color = sf::Color::Red;
-				tr.color = sf::Color::Red;
-				br.color = sf::Color::Red;
-				bl.color = sf::Color::Red;
-			} else
-			{
-				tl.color = sf::Color::White;
-				tr.color = sf::Color::White;
-				br.color = sf::Color::White;
-				bl.color = sf::Color::White;
+	for (int i = 0; i < texture_groups.size(); i++) {
+		vertex_arrays[i] = sf::VertexArray(sf::Quads, texture_groups[i].size() * 4);
+		const auto cTX = textures[i].getSize().x;
+		const auto cTY = textures[i].getSize().y;
+		for (const auto j : texture_groups[i])
+		{
+			const auto& actor = actors[j];
+			if (actor != nullptr && is_inside_box(actor->ball.pos, window.getView().getCenter() - (window.getView().getSize() / 2.f), window.getView().getSize()) && actor->ball.rad/zoom > min_size){
+				sf::Vertex tl;
+				tl.position = actor->ball.pos + sf::Vector2f(cosf(3.1415f * 3 / 4 + actor->facing), sinf(3.1415f * 3 / 4 + actor->facing)) * actor->ball.rad;
+				tl.texCoords = sf::Vector2f(0, 0);
+				tl.color = actor->sprite_color;
+				sf::Vertex tr;
+				tr.position = actor->ball.pos + sf::Vector2f(cosf(3.1415f / 4 + actor->facing), sinf(3.1415f / 4 + actor->facing)) * actor->ball.rad;
+				tr.texCoords = sf::Vector2f(cTX, 0);
+				tr.color = actor->sprite_color;
+				sf::Vertex br;
+				br.position = actor->ball.pos + sf::Vector2f(cosf(-3.1415f / 4 + actor->facing), sinf(-3.1415f / 4 + actor->facing)) * actor->ball.rad;
+				br.texCoords = sf::Vector2f(cTX, cTY);
+				br.color = actor->sprite_color;
+				sf::Vertex bl;
+				bl.position = actor->ball.pos + sf::Vector2f(cosf(-3.1415f * 3 / 4 + actor->facing), sinf(-3.1415f * 3 / 4 + actor->facing)) * actor->ball.rad;
+				bl.texCoords = sf::Vector2f(0, cTY);
+				bl.color = actor->sprite_color;
+
+				//if (actor->ball.active)
+				//{
+				//	tl.color = sf::Color::Red;
+				//	tr.color = sf::Color::Red;
+				//	br.color = sf::Color::Red;
+				//	bl.color = sf::Color::Red;
+				//}
+				//else
+				//{
+
+				//	tl.color = sf::Color::White;
+				//	tr.color = sf::Color::White;
+				//	br.color = sf::Color::White;
+				//	bl.color = sf::Color::White;
+				//}
+
+				vertex_arrays[i].append(tl);
+				vertex_arrays[i].append(tr);
+				vertex_arrays[i].append(br);
+				vertex_arrays[i].append(bl);
 			}
-			circles.append(tl);
-			circles.append(tr);
-			circles.append(br);
-			circles.append(bl);
+		}
+		window.draw(vertex_arrays[i], &textures[i]);
+	}
+	{
+		std::cout << zoom << std::endl;
+		sf::VertexArray zoom_indicators (sf::Quads);
+		const auto cTX = textures[1].getSize().x;
+		const auto cTY = textures[1].getSize().y;
+
+		for (auto i : actors)
+		{
+			if (i.second != nullptr && is_inside_box(i.second->ball.pos, window.getView().getCenter() - (window.getView().getSize() / 2.f), window.getView().getSize())) {
+				if(i.second->ball.rad/zoom < min_size)
+				{
+					auto actor = i.second;
+					sf::Vertex tl;
+					tl.position = actor->ball.pos + sf::Vector2f(cosf(3.1415f * 3 / 4 + actor->facing), sinf(3.1415f * 3 / 4 + actor->facing)) * zoom * min_size;
+					tl.texCoords = sf::Vector2f(0, 0);
+					tl.color = actor->sprite_color;
+					sf::Vertex tr;
+					tr.position = actor->ball.pos + sf::Vector2f(cosf(3.1415f / 4 + actor->facing), sinf(3.1415f / 4 + actor->facing)) * zoom * min_size;
+					tr.texCoords = sf::Vector2f(cTX, 0);
+					tr.color = actor->sprite_color;
+					sf::Vertex br;
+					br.position = actor->ball.pos + sf::Vector2f(cosf(-3.1415f / 4 + actor->facing), sinf(-3.1415f / 4 + actor->facing)) * zoom * min_size;
+					br.texCoords = sf::Vector2f(cTX, cTY);
+					br.color = actor->sprite_color;
+					sf::Vertex bl;
+					bl.position = actor->ball.pos + sf::Vector2f(cosf(-3.1415f * 3 / 4 + actor->facing), sinf(-3.1415f * 3 / 4 + actor->facing)) * zoom * min_size;
+					bl.texCoords = sf::Vector2f(0, cTY);
+					bl.color = actor->sprite_color;
+
+					zoom_indicators.append(tl);
+					zoom_indicators.append(tr);
+					zoom_indicators.append(br);
+					zoom_indicators.append(bl);
+				}
+			}
+			window.draw(zoom_indicators, &textures[1]);
 		}
 	}
 	//std::cout << circles.getVertexCount() << std::endl;
-	window.draw(circles,  &circleTexture);
-	circles.clear();
+	
 	//for (auto b : actors)
 	//{
 	//	b.second->draw(window);
@@ -204,7 +263,7 @@ void PhysicsManager::update()
 	//std::cout << "selected_actor_check: " << std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() << std::endl;
 	
 
-	auto start = std::chrono::high_resolution_clock::now();
+	//auto start = std::chrono::high_resolution_clock::now();
 	auto exiting_actors = std::unordered_set<int>();
 	CriticalMutex::all_frozen = true;
 	for(auto i = chunk_threads.begin(); i != chunk_threads.end(); ++i)
@@ -215,14 +274,20 @@ void PhysicsManager::update()
 			exiting_actors.insert(i->second->exiting_actors.begin(), i->second->exiting_actors.end());
 			i->second->exiting_actors.clear();
 		}
+		if (!i->second->for_deletion.empty()) {
+			//std::cout << i->first << std::endl;
+			for (auto j = i->second->for_deletion.begin(); j != i->second->for_deletion.end(); ++j) {
+				actors.erase(*j);
+			}
+		}
 	}
 	CriticalMutex::all_frozen = false;
-	auto end = std::chrono::high_resolution_clock::now();
+	//auto end = std::chrono::high_resolution_clock::now();
 	//std::cout << "populating exiting actors: " << std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() << std::endl;
 	
-	start = std::chrono::high_resolution_clock::now();
+	//auto start = std::chrono::high_resolution_clock::now();
 	re_add_actor(exiting_actors);
-	end = std::chrono::high_resolution_clock::now();
+	//auto end = std::chrono::high_resolution_clock::now();
 	//std::cout << "re add actor: " << std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() << "\n\n" << std::endl;
 	Sleep(1);
 }
@@ -230,6 +295,24 @@ void PhysicsManager::update()
 std::array<int, 4> PhysicsManager::place_actor(const int b)
 {
 	const auto actor = actors[b];
+
+	if(actor->ball.pos.x < 0)
+	{
+		actor->ball.pos.x = 1;
+	}
+	if (actor->ball.pos.y < 0)
+	{
+		actor->ball.pos.y = 1;
+	}
+	if (actor->ball.pos.x > width)
+	{
+		actor->ball.pos.x = width - 1;
+	}
+	if (actor->ball.pos.y > height)
+	{
+		actor->ball.pos.y = height - 1;
+	}
+
 	const auto chunk_x = static_cast<int>(actor->ball.pos.x) / chunk_width;
 	const auto chunk_y = static_cast<int>(actor->ball.pos.y) / chunk_height;
 	const int chunk = chunk_x + (chunk_y * 100000);
@@ -275,16 +358,18 @@ void PhysicsManager::add_actor(std::vector<shared_ptr<Actor>> added_actors)
 	{
 		actor->setId(static_cast<int>(actors.size()));
 		actors[static_cast<int>(actors.size())] = actor;
-
+		texture_groups[actor->sprite_id].insert(actor->getId());
 		auto list = place_actor(actor->getId());
 		for (auto i : list)
 		{
+			
 			if(i != -1)
 			{
 				if (chunk_add_map.count(i) <= 0)
 					chunk_add_map[i] = std::queue<int>();
 				chunk_add_map[i].push(actor->getId());
 			}
+			
 		}
 	}
 	std::unordered_map<int, std::list<int>> thread_add_map;
@@ -492,6 +577,8 @@ void PhysicsManager::select_actor()
 		if(b.second != nullptr)
 			if (b.second->ball.isInside(mousePos)) {
 				selectedActor = b.second;
+
+				global_selected_actor = selectedActor->getId();
 				return;
 			}
 	}

@@ -13,7 +13,8 @@ BasicActor::BasicActor() : Actor()
 		ray_angles.push_back(f);
 		sighted_actors.push_back(nullptr);
 	}
-	sight_range = 300;
+	sprite_id = 0;
+	sight_range = 100;
 }
 
 BasicActor::BasicActor(Ball& b) : Actor()
@@ -25,8 +26,11 @@ BasicActor::BasicActor(Ball& b) : Actor()
 		ray_angles.push_back(f);
 		sighted_actors.push_back(nullptr);
 	}
-	sight_range = 300;
+	sprite_id = 0;
+	sight_range = 100;
 }
+
+
 
 void BasicActor::update()
 {
@@ -37,10 +41,10 @@ void BasicActor::update()
 	{
 		if (a != nullptr)
 		{
-			
 			sf::Vector2f vec = a->ball.pos - ball.pos;
 			avoid += (vec) / sqrt(Ball::magsq(vec)) * 0.01f;
 		}
 	}
-	ball.acc = avoid;
+	ball.acc = avoid +  avoid_walls() * 0.1f;
+	//ball.acc = { 1, 0 };
 }

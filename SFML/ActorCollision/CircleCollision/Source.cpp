@@ -14,6 +14,7 @@
 
 using sf::RenderWindow;
 
+
 int main() {
 	srand((std::chrono::system_clock::now().time_since_epoch()).count());
 	//RenderWindow real_window(sf::VideoMode(1900, 1000), "Actors");
@@ -22,15 +23,19 @@ int main() {
 	window->setFramerateLimit(144);
 	sf::View view = window->getDefaultView();
 
+	int world_width = 10000;
+	int world_height = 10000;
+
 	std::vector<shared_ptr<Actor>> actors = {};
-	for (int i = 0; i < 10000; i++) {
+	for (int i = 0; i < 2000; i++) {
 		std::cout << "Actor: " << i << std::endl;
-		Ball b = Ball(5, rand() % 10000, rand() % 10000, 100, 0.9f);
+		Actor::world_size = { world_width, world_height };
+		Ball b = Ball(5, rand() % (world_width - 500) + 500, rand() % world_height, 100, 0.9f, 0.03f);
 		actors.push_back(std::make_shared<BasicActor>(BasicActor(b)));
 	}
 
 
-	PhysicsManager p(5000, 5000, 250, 250);
+	PhysicsManager p(world_width, world_height, 250, 250);
 	p.add_actor(actors);
 
 
@@ -115,7 +120,7 @@ int main() {
 		//auto end = std::chrono::high_resolution_clock::now();
 		//std::cout << "Draw: " << std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() << std::endl;
 		window->display();
-		window->clear(sf::Color::Black);
+		window->clear(sf::Color(125, 125, 125));
 		//Sleep(100);
 	}
 	

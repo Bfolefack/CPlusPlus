@@ -41,6 +41,8 @@ public:
 	bool is_border = false;
 	bool active = true;
 
+	float ray_update_buffer = 0;
+
 	PhysicsChunk();
 	PhysicsChunk(int i, sf::Vector2f p, sf::Vector2f s, Border b);
 	static std::array<int, 4> place_actor(const shared_ptr<Actor>& actor, std::unordered_map<int, int>& chunk_ids, int chunk_size_x, int chunk_size_y, std::vector<
@@ -63,6 +65,6 @@ public:
 	//void vel_deselect_actor(sf::Vector2f mouse_pos);
 	void resolve_collisions(float delta_time);
 private:
-	std::queue<int> physics_update(float deltaTime);
+	std::pair<std::queue<int>, std::queue<int>> physics_update(float delta_time);
 };
 

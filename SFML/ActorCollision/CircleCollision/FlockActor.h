@@ -5,16 +5,14 @@ class Actor;
 class FlockActor : public Actor
 {
 public:
+	float steer_angle = 0;
+
 	using Actor::Actor;
-
-	int world_width;
-	int world_height;
-
-	sf::Vector2f& avoid_walls();
-	float avoid_walls_angle();
+	void loop();
 	/*FlockActor();*/
 	void update() override;
 	void draw() override;
+	FlockActor(const Ball& b);
 	FlockActor(int w, int h);
 	//~BasicActor() override = default;
 };

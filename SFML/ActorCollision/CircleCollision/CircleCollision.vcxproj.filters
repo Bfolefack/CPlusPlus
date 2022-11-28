@@ -48,9 +48,6 @@
     <ClCompile Include="FlockActor.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Ray.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Ball.h">
@@ -83,9 +80,6 @@
     <ClInclude Include="FlockActor.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Ray.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Font Include="COMIC.TTF">
@@ -94,6 +88,9 @@
   </ItemGroup>
   <ItemGroup>
     <Image Include="circle.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="chevron.png">
       <Filter>Resource Files</Filter>
     </Image>
   </ItemGroup>

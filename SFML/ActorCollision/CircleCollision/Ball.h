@@ -17,10 +17,9 @@ public:
 	float rad;
 	float mass;
 	float elasticity;
-	float delta_time = 1;
+	float friction;
 	static constexpr float max_vel = 400;
 	static constexpr float sqrt_max_vel = 20;
-	bool collision;
 	bool active;
 	bool always_active;
 
@@ -28,10 +27,9 @@ public:
 	//Ball& operator= (const Ball&) = delete;
 	
 	Ball();
-	Ball(int i, float r, float x, float y, float vx, float vy, float m, float e);
-	Ball(float r, float x, float y, float m, float e);
+	Ball(float r, float x, float y, float m, float e, float f);
 
-	void update();
+	void update(const float& delta_time);
 	void draw(sf::RenderWindow& window) const;
 	bool isInside(sf::Vector2f v) const;
 
