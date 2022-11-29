@@ -6,7 +6,6 @@ class FlockActor : public Actor
 {
 public:
 	float steer_angle = 0;
-
 	using Actor::Actor;
 	void loop();
 	/*FlockActor();*/

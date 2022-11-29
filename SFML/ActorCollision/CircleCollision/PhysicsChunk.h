@@ -37,9 +37,11 @@ public:
 	sf::Vector2f pos;
 	sf::Vector2f size;
 	std::list<int> exiting_actors;
+	std::list<int> for_deletion;
 	Border bounds;
 	bool is_border = false;
 	bool active = true;
+	std::unordered_set< std::shared_ptr<Actor>> for_creation;
 
 	float ray_update_buffer = 0;
 
@@ -65,6 +67,6 @@ public:
 	//void vel_deselect_actor(sf::Vector2f mouse_pos);
 	void resolve_collisions(float delta_time);
 private:
-	std::pair<std::queue<int>, std::queue<int>> physics_update(float delta_time);
+	void physics_update(float delta_time);
 };
 

@@ -4,6 +4,7 @@
 
 void FlockActor::draw() {}
 
+
 FlockActor::FlockActor(const Ball& b) : Actor(b)
 {
 	ball = b;
@@ -79,11 +80,11 @@ void FlockActor::update()
 	std::lock_guard<std::mutex> lck(*mutex);
 	sf::Vector2f vel_sum = { 0, 0 };
 	
-	bool kill = true;
+	int neighbors = 0;
 	for (const auto& a : sighted_actors)
 	{
 		if (a != nullptr) {
-			kill = false;
+			neighbors++;
 			auto vec = a->ball.pos - ball.pos;
 			float dist = Ball::magsq(vec);
 			if (actor_type == a->actor_type) {
@@ -102,6 +103,20 @@ void FlockActor::update()
 			vel_sum += a->ball.vel * (1 - sqrt(dist) / sight_range);
 		}
 		//std::cout << sqrt(Ball::magsq(avoid)) << std::endl;
+	}
+	
+	if(neighbors < 3 && rand() % 100 == 0)
+	{
+		auto temp = FlockActor(Ball());
+		temp.ball.pos = ball.pos;
+		temp.actor_type = actor_type;
+		temp.sprite_color = sprite_color;
+		for_creation = std::make_shared<FlockActor>(temp);
+	}
+
+	if(rand() % 1000 == 0)
+	{
+		for_deletion = true;
 	}
 	//if (kill)
 	//{

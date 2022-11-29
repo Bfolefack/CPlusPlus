@@ -23,15 +23,15 @@ int main() {
 	window->setFramerateLimit(144);
 	sf::View view = window->getDefaultView();
 
-	int world_width = 10000;
-	int world_height = 10000;
+	int world_width = 5000;
+	int world_height = 5000;
 
 	std::vector<shared_ptr<Actor>> actors = {};
-	for (int i = 0; i < 2000; i++) {
+	for (int i = 0; i < 10; i++) {
 		std::cout << "Actor: " << i << std::endl;
 		Actor::world_size = { world_width, world_height };
-		Ball b = Ball(5, rand() % (world_width - 500) + 500, rand() % world_height, 100, 0.9f, 0.03f);
-		actors.push_back(std::make_shared<BasicActor>(BasicActor(b)));
+		Ball b = Ball(5, rand() % world_width, rand() % world_height, 100, 0.9f, 0.03f);
+		actors.push_back(std::make_shared<FlockActor>(FlockActor(b)));
 	}
 
 

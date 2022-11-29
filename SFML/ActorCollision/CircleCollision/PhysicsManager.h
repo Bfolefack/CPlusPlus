@@ -27,6 +27,7 @@ public:
 	int height;
 	int width;
 	int next_actor;
+	std::mutex manager_mutex;
 	static int global_selected_actor;
 
 	std::vector<sf::VertexArray> vertex_arrays;
@@ -42,7 +43,7 @@ public:
 	void draw(sf::RenderWindow& window);
 	void update();
 	std::array<int, 4> place_actor(int b);
-	void add_actor(std::vector<shared_ptr<Actor>> actors);
+	void add_actor(const std::vector<shared_ptr<Actor>>& actors);
 	void re_add_actor(std::unordered_set<int> added_actors);
 	//void add_actor(Actor& actor);
 	void re_add_actor(int id);

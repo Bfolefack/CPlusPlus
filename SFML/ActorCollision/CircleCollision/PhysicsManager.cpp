@@ -128,13 +128,14 @@ void PhysicsManager::draw(sf::RenderWindow& window)
 	auto zoom = window.getView().getSize().x / window.getDefaultView().getSize().x;
 	float min_size = 2;
 	//std::cout << circleTexture.getSize().x << ", " << circleTexture.getSize().y << std::endl;
+	std::lock_guard<std::mutex> lock(manager_mutex);
 	for (int i = 0; i < texture_groups.size(); i++) {
 		vertex_arrays[i] = sf::VertexArray(sf::Quads, texture_groups[i].size() * 4);
 		const auto cTX = textures[i].getSize().x;
 		const auto cTY = textures[i].getSize().y;
 		for (const auto j : texture_groups[i])
 		{
-			const auto& actor = actors[j];
+			const auto actor = actors[j];
 			if (actor != nullptr && is_inside_box(actor->ball.pos, window.getView().getCenter() - (window.getView().getSize() / 2.f), window.getView().getSize()) && actor->ball.rad/zoom > min_size){
 				sf::Vertex tl;
 				tl.position = actor->ball.pos + sf::Vector2f(cosf(3.1415f * 3 / 4 + actor->facing), sinf(3.1415f * 3 / 4 + actor->facing)) * actor->ball.rad;
@@ -178,7 +179,7 @@ void PhysicsManager::draw(sf::RenderWindow& window)
 		window.draw(vertex_arrays[i], &textures[i]);
 	}
 	{
-		std::cout << zoom << std::endl;
+		//std::cout << zoom << std::endl;
 		sf::VertexArray zoom_indicators (sf::Quads);
 		const auto cTX = textures[1].getSize().x;
 		const auto cTY = textures[1].getSize().y;
@@ -266,6 +267,8 @@ void PhysicsManager::update()
 	//auto start = std::chrono::high_resolution_clock::now();
 	auto exiting_actors = std::unordered_set<int>();
 	CriticalMutex::all_frozen = true;
+	std::vector<std::shared_ptr<Actor>> for_creation;
+	std::unordered_set<int> for_deletion;
 	for(auto i = chunk_threads.begin(); i != chunk_threads.end(); ++i)
 	{
 		std::lock_guard<std::mutex> lock(*i->second->mutex);
@@ -276,16 +279,36 @@ void PhysicsManager::update()
 		}
 		if (!i->second->for_deletion.empty()) {
 			//std::cout << i->first << std::endl;
-			for (auto j = i->second->for_deletion.begin(); j != i->second->for_deletion.end(); ++j) {
-				actors.erase(*j);
-			}
+			for_deletion.insert(i->second->for_deletion.begin(), i->second->for_deletion.end());
+			i->second->for_deletion.clear();
+		}
+		if(!i->second->for_creation.empty())
+		{
+			for_creation.insert(for_creation.end(), i->second->for_creation.begin(), i->second->for_creation.end());
+			i->second->for_creation.clear();
 		}
 	}
 	CriticalMutex::all_frozen = false;
 	//auto end = std::chrono::high_resolution_clock::now();
 	//std::cout << "populating exiting actors: " << std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() << std::endl;
-	
+	{
+		std::lock_guard<std::mutex> lock(manager_mutex);
+		for (auto i : for_creation)
+		{
+			auto id = static_cast<int>(actors.size());
+			i->setId(id);
+			actors[id] = move(i);
+			texture_groups[actors[id]->sprite_id].insert(id);
+
+			exiting_actors.insert(id);
+		}
+		for (auto& i : for_deletion)
+		{
+			actors.erase(i);
+		}
+	}
 	//auto start = std::chrono::high_resolution_clock::now();
+	//if (!exiting_actors.empty())
 	re_add_actor(exiting_actors);
 	//auto end = std::chrono::high_resolution_clock::now();
 	//std::cout << "re add actor: " << std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() << "\n\n" << std::endl;
@@ -345,16 +368,16 @@ std::array<int, 4> PhysicsManager::place_actor(const int b)
 	return out;
 }
 
-void PhysicsManager::add_actor(std::vector<shared_ptr<Actor>> added_actors)
+void PhysicsManager::add_actor(const std::vector<shared_ptr<Actor>>& added_actors)
 {
-	CriticalMutex::all_frozen = true;
+	//CriticalMutex::all_frozen = true;
 	auto chunk_add_map = std::unordered_map<int, std::queue<int>>();
 	//for (auto i = chunk_threads.begin(); i != chunk_threads.end() ; ++i)
 	//{
 	//	const int n = i->first;
 	//	//chunk_add_map.insert(n, );
 	//}
-	for (const shared_ptr<Actor> actor : added_actors)
+	for (const shared_ptr<Actor>& actor : added_actors)
 	{
 		actor->setId(static_cast<int>(actors.size()));
 		actors[static_cast<int>(actors.size())] = actor;
@@ -392,7 +415,7 @@ void PhysicsManager::add_actor(std::vector<shared_ptr<Actor>> added_actors)
 			}			
 		}
 	}
-	CriticalMutex::all_frozen = false;
+	//CriticalMutex::all_frozen = false;
 }
 
 void PhysicsManager::re_add_actor(std::unordered_set<int> added_actors)

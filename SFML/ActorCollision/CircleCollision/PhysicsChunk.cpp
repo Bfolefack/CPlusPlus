@@ -267,6 +267,16 @@ void PhysicsChunk::compounded_update(std::unique_ptr<CriticalMutex>& mutex)
 								mutex->for_deletion.insert(b);
 							}
 						}
+						i.second->for_deletion.clear();
+					}
+
+					if (!i.second->for_creation.empty())
+					{
+						for (auto& b : i.second->for_creation)
+						{
+							mutex->for_creation.push_back(b);
+						}
+						i.second->for_creation.clear();
 					}
 				}
 
@@ -293,28 +303,13 @@ void PhysicsChunk::update(float deltaTime, ChunkInterface& ct)
 
 	if (!actors.empty()) {
 		if (!CriticalMutex::all_frozen) {
-			auto temp = physics_update(deltaTime);
-			auto exit = temp.first;
-			auto for_deletion = temp.second;
-			while (!exit.empty())
-			{
-				auto id = exit.front();
-				actors.erase(id);
-				exiting_actors.push_back(id);
-				exit.pop();
-			}
-
-			while (!for_deletion.empty())
-			{
-				actors.erase(for_deletion.front());
-				ct.for_deletion.insert(for_deletion.front());
-				for_deletion.pop();
-			}
+			physics_update(deltaTime);
 			
-			for (auto b : exiting_actors)
-			{
-				ct.exiting_actors.insert(b);
-			}
+			ct.for_deletion.insert(for_deletion.begin(), for_deletion.end());
+			ct.exiting_actors.insert(exiting_actors.begin(), exiting_actors.end());
+			ct.for_creation.insert(for_creation.begin(), for_creation.end());
+			for_creation.clear();
+			for_deletion.clear();
 			exiting_actors.clear();
 		}
 	} else
@@ -332,11 +327,11 @@ void PhysicsChunk::perpetual_update(float delta_time, ChunkInterface& ct, std::m
 }
 
 
-std::pair<std::queue<int>, std::queue<int>> PhysicsChunk::physics_update(float delta_time)
+void PhysicsChunk::physics_update(float delta_time)
 {
 	if (actors.empty()) {
 		active = false;
-		return {};
+		return;
 	}
 	
 	//std::deque<shared_ptr<Actor>> temp_actors;
@@ -441,12 +436,12 @@ std::pair<std::queue<int>, std::queue<int>> PhysicsChunk::physics_update(float d
 			}
 		//std::cout << bounds.left << ", " << bounds.right << ", " << bounds.top << ", " << bounds.bottom << std::endl;
 
-		std::queue<int> temp_exit;
-		std::queue<int> for_deletion;
+		std::queue<int> exit;
+		
 		ray_update_buffer += delta_time;
 		if (ray_update_buffer > 10.f)
 			ray_update_buffer = 0;
-		for (auto b : actors) {
+		for (auto& b : actors) {
 			if (b.second->ball.active || b.second->ball.always_active) {
 				std::unique_lock <std::mutex > b_lock(*b.second->mutex);
 				if (ray_update_buffer == 0.f) 
@@ -454,18 +449,33 @@ std::pair<std::queue<int>, std::queue<int>> PhysicsChunk::physics_update(float d
 				b.second->ball.update(delta_time);
 				if (((b.second->ball.pos.x < pos.x) && !bounds.left) || ((b.second->ball.pos.x > pos.x + size.x) && !bounds.right) || ((b.second->ball.pos.y < pos.y) && !bounds.top) || ((b.second->ball.pos.y > pos.y + size.y) && !bounds.bottom))
 				{
-					temp_exit.push(b.first);
+					exit.push(b.first);
 					//remove_actor(b.first);
 				}
 				if(b.second->for_deletion)
 				{
-					for_deletion.push(b.first);
+					for_deletion.push_back(b.first);
+				}
+				if (b.second->for_creation != nullptr)
+				{
+					for_creation.insert(b.second->for_creation);
+					b.second->for_creation = nullptr;
 				}
 			}
 		}
-		return { temp_exit, for_deletion };
+
+		while (!exit.empty())
+		{
+			auto id = exit.front();
+			actors.erase(id);
+			exiting_actors.push_back(id);
+			exit.pop();
+		}
+		for (const auto& i : for_deletion)
+		{
+			actors.erase(i);
+		}
 	}
-	return {};	
 }
 
 
