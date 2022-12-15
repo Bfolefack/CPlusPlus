@@ -15,7 +15,8 @@
 #include "VeganActor.h"
 
 using sf::RenderWindow;
-
+int world_width = 50000;
+int world_height = 50000;
 
 int main() {
 	srand((std::chrono::system_clock::now().time_since_epoch()).count());
@@ -24,19 +25,26 @@ int main() {
 	
 	window->setFramerateLimit(144);
 	sf::View view = window->getDefaultView();
-	int world_width = 100000;
-	int world_height = 100000;
-	PlantActor::world_nutrition = 30000;
+
+	Actor::world_size = { world_width, world_height };
+	PlantActor::world_nutrition = 100000;
 
 	std::vector<shared_ptr<Actor>> actors = {};
-	for (int i = 0; i < 200; i++) {
+	for (int i = 0; i < 50; i++) {
+		std::cout << "VeganActor: " << i << std::endl;
+		Ball b = Ball(5, (rand() % (world_width / 1000)) * 1000 + rand() % 1000, (rand() % (world_height / 1000)) * 1000 + rand() % 1000, 100, 0.9f, 0.03f);
+		//for(int i = 0; i < 10; i++)
+		actors.push_back(std::make_shared<VeganActor>(VeganActor(b)));
+	}
+	for (int i = 0; i < 20; i++) {
 		std::cout << "PlantActor: " << i << std::endl;
-		Actor::world_size = { world_width, world_height };
 		Ball b = Ball(5, (rand() % (world_width/1000)) * 1000 + rand() % 1000, (rand() % (world_height / 1000)) * 1000 + rand() % 1000, 100, 0.9f, 0.03f);
 		//for(int i = 0; i < 10; i++)
 		actors.push_back(std::make_shared<PlantActor>(PlantActor(b)));
 	}
 
+	
+	
 
 	PhysicsManager p(world_width, world_height, 2000, 2000);
 	p.add_actor(actors);
@@ -87,6 +95,20 @@ int main() {
 			{
 				view.move(10 * (window->getView().getSize().x / window->getSize().x), 0);
 			}
+
+
+			if (sf::Keyboard::isKeyPressed(sf::Keyboard::Period))
+			{
+				if(PhysicsChunk::time_warp < 32.f)
+					PhysicsChunk::time_warp *= sqrtf(2.f);
+				continue;
+			}
+			if (sf::Keyboard::isKeyPressed(sf::Keyboard::Comma))
+			{
+				PhysicsChunk::time_warp /= sqrtf(2.f);
+				continue;
+			}
+
 			if(event.type == sf::Event::MouseWheelScrolled)
 			{
 				//std::cout << event.mouseWheelScroll.delta << std::endl;
@@ -101,6 +123,7 @@ int main() {
 			if (sf::Keyboard::isKeyPressed(sf::Keyboard::R))
 			{
 				view = window->getDefaultView();
+				PhysicsChunk::time_warp = 1.f;
 			}
 			if (sf::Keyboard::isKeyPressed(sf::Keyboard::B))
 			{
@@ -128,18 +151,6 @@ int main() {
 		window->clear(sf::Color(125, 125, 125));
 		//Sleep(100);
 		frame_count++;
-		if(frame_count == 900)
-		{
-			std::lock_guard<std::mutex>(p.manager_mutex);
-			for (int i = 0; i < 250; i++) {
-				std::cout << "VeganActor: " << i << std::endl;
-				Actor::world_size = { world_width, world_height };
-				Ball b = Ball(5, (rand() % (world_width / 1000)) * 1000 + rand() % 1000, (rand() % (world_height / 1000)) * 1000 + rand() % 1000, 100, 0.9f, 0.03f);
-				//for(int i = 0; i < 10; i++)
-				actors.push_back(std::make_shared<VeganActor>(VeganActor(b)));
-			}
-			p.add_actor(actors);
-		}
 	}
 	
 	return 0;

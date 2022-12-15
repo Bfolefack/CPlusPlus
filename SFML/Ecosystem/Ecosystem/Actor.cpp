@@ -15,7 +15,7 @@ Actor::Actor()
 	sprite_color = sf::Color::White;
 	actor_type = -1;
 	facing = 0;
-	sight_range = 100;
+	sight_range = 0;
 	mutex = std::make_shared<std::mutex>();
 }
 

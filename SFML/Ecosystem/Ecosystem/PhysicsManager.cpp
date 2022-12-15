@@ -144,10 +144,11 @@ void PhysicsManager::draw(sf::RenderWindow& window)
 		vertex_arrays[i] = sf::VertexArray(sf::Quads, texture_groups[i].size() * 4);
 		const auto cTX = textures[i].getSize().x;
 		const auto cTY = textures[i].getSize().y;
-		populations.push_back(texture_groups[i].size());
+		populations.push_back(0);
 		for (const auto j : texture_groups[i])
 		{
 			if (actors.count(j) > 0) {
+				populations[i]++;
 				const auto actor = actors.at(j);
 				//if (PlantActor* c = dynamic_cast<PlantActor*>(actor.get()))
 				//{
@@ -237,12 +238,22 @@ void PhysicsManager::draw(sf::RenderWindow& window)
 	{
 		auto saved_view = window.getView();
 		window.setView(window.getDefaultView());
+
+		sf::Text speed_text = sf::Text();
+		speed_text.setFont(font);
+		float warp = PhysicsChunk::time_warp;
+		speed_text.setString("Speed: x" + round(warp, 4));
+		speed_text.setCharacterSize(32);
+		speed_text.setFillColor(sf::Color::White);
+		speed_text.setPosition(0, 0);
+		window.draw(speed_text);
+
 		sf::Text zoom_text = sf::Text();
 		zoom_text.setFont(font);
-		zoom_text.setString("Zoom: " + std::to_string((int)zoom) + "." + std::to_string((int)((zoom - (int)zoom) * 1000)));
+		zoom_text.setString("Zoom: " + round(zoom, 4));
 		zoom_text.setCharacterSize(32);
 		zoom_text.setFillColor(sf::Color::White);
-		zoom_text.setPosition(0, 0 );
+		zoom_text.setPosition(0, 32 );
 		window.draw(zoom_text);
 
 		sf::Text energy_text = sf::Text();
@@ -250,7 +261,7 @@ void PhysicsManager::draw(sf::RenderWindow& window)
 		energy_text.setString("World Energy: " + std::to_string((int)PlantActor::world_nutrition));
 		energy_text.setCharacterSize(32);
 		energy_text.setFillColor(sf::Color::White);
-		energy_text.setPosition(0, 32);
+		energy_text.setPosition(0, 64);
 		window.draw(energy_text);
 
 		sf::Text plant_text = sf::Text();
@@ -258,7 +269,7 @@ void PhysicsManager::draw(sf::RenderWindow& window)
 		plant_text.setString("Plant Population: " + std::to_string(populations[1]));
 		plant_text.setCharacterSize(32);
 		plant_text.setFillColor(sf::Color::White);
-		plant_text.setPosition(0, 64);
+		plant_text.setPosition(0, 96);
 		window.draw(plant_text);
 
 		sf::Text vegan_text = sf::Text();
@@ -266,7 +277,7 @@ void PhysicsManager::draw(sf::RenderWindow& window)
 		vegan_text.setString("Vegan Population: " + std::to_string(populations[0]));
 		vegan_text.setCharacterSize(32);
 		vegan_text.setFillColor(sf::Color::White);
-		vegan_text.setPosition(0, 96);
+		vegan_text.setPosition(0, 128);
 		window.draw(vegan_text);
 		window.setView(saved_view);
 	}
@@ -282,6 +293,11 @@ void PhysicsManager::draw(sf::RenderWindow& window)
 	}
 
 
+}
+
+std::string PhysicsManager::round(float f, int deci)
+{
+	return std::to_string(f).substr(0, (log10f(f) < 1 ? 1 : log10f(f)) + deci + 1);
 }
 
 void PhysicsManager::drawLine(sf::Vector2f point1, sf::Vector2f point2, sf::Color color, sf::RenderWindow& window) {
@@ -344,6 +360,7 @@ void PhysicsManager::update()
 			i->second->for_creation.clear();
 		}
 	}
+
 	CriticalMutex::all_frozen = false;
 	//auto end = std::chrono::high_resolution_clock::now();
 	//std::cout << "populating exiting actors: " << std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() << std::endl;
@@ -356,6 +373,17 @@ void PhysicsManager::update()
 				actors.erase(i);
 			}
 		}
+
+		//TODO: PLANTACTOR CODE
+		if (PlantActor::world_nutrition > 2000 /*&& rand() % (int)(1/PhysicsChunk::time_warp <= 1 ? 1 : 1 / PhysicsChunk::time_warp) == 0*/)
+		{
+			Ball temp = Ball();
+			temp.pos = { (float)((rand() % (Actor::world_size.x / 1000)) * 1000 + rand() % 1000), (float)((rand() % (Actor::world_size.y / 1000)) * 1000 + rand() % 1000) };
+			auto size = rand() % 500 + 200;
+			PlantActor::world_nutrition = PlantActor::world_nutrition - size;
+			for_creation.push_back(std::make_shared<PlantActor>(temp, size));
+		}
+
 		for (auto i : for_creation)
 		{
 			auto id = current_actor;

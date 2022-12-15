@@ -30,6 +30,7 @@ class PhysicsChunk
 public:
 	static std::unordered_map <int, shared_ptr<PhysicsChunk>> chunk_map;
 	static std::mutex chunk_map_mutex;
+	static float time_warp;
 
 	int id;
 	unordered_map<int, shared_ptr<Actor>> actors;
@@ -50,9 +51,9 @@ public:
 	static std::array<int, 4> place_actor(const shared_ptr<Actor>& actor, std::unordered_map<int, int>& chunk_ids, int chunk_size_x, int chunk_size_y, std::vector<
 	                                     std::shared_ptr<PhysicsChunk>>& chunks, bool bulk);
 	static void compounded_update(std::unique_ptr<CriticalMutex>& mutex);
-	void update(float deltaTime, ChunkInterface& ct);
-	void perpetual_update(float deltaTime, ChunkInterface& ct, std::mutex& m);
-	static void update(shared_ptr<PhysicsChunk> pc, float deltaTime,
+	void update(float delta_time, ChunkInterface& ct);
+	void perpetual_update(float delta_time, ChunkInterface& ct, std::mutex& m);
+	static void update(shared_ptr<PhysicsChunk> pc, float delta_time,
 	                   shared_ptr<std::unordered_set<int>>& exiting_actors);
 	//void add_actor(int id, const Actor& actor);
 	void add_actor(int id, const shared_ptr<Actor>& actor);

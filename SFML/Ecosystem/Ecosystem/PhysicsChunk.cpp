@@ -29,6 +29,7 @@ using std::unordered_map;
 
 std::unordered_map<int, shared_ptr<PhysicsChunk>> PhysicsChunk::chunk_map = std::unordered_map<int, shared_ptr<PhysicsChunk>>();
 std::mutex PhysicsChunk::chunk_map_mutex;
+float PhysicsChunk::time_warp = 1;
 
 PhysicsChunk::PhysicsChunk()
 {
@@ -279,8 +280,13 @@ void PhysicsChunk::compounded_update(std::unique_ptr<CriticalMutex>& mutex)
 							mutex->for_creation.push_back(b);
 						}
 						i.second->for_creation.clear();
+
 					}
 				}
+
+				
+
+				
 
 				end2 = std::chrono::high_resolution_clock::now();
 				populating_exiting_actors = std::chrono::duration_cast<std::chrono::microseconds>(end2 - start2).count();
@@ -291,21 +297,23 @@ void PhysicsChunk::compounded_update(std::unique_ptr<CriticalMutex>& mutex)
 		Sleep(.1f);
 		auto end = std::chrono::high_resolution_clock::now();
 		auto runtime = (float)std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
-		delta_time = runtime / 6944.4;
-		if (delta_time > 1.f)
-			delta_time = 1.f;
+		delta_time = (runtime / 6944.4) * time_warp;
+		//TODO: FIX THIS
+		//if (delta_time > 1.f)
+		//	delta_time = 1.f;
+
 		//if (delta_time > 10)
 			//std::cout << "Lock Time: " << lock_time << "\n" << "Limbo List: " << limbo_list << "\n" << "Chunk Updates: " << chunk_updates << "\n" << "Populating Exiting Actors: " << populating_exiting_actors << "\n" << "Total: " << runtime << "\n" << "Delta Time: " << delta_time << "\n" << std::endl;
 
 	}
 }
 
-void PhysicsChunk::update(float deltaTime, ChunkInterface& ct)
+void PhysicsChunk::update(float delta_time, ChunkInterface& ct)
 {
 
 	if (!actors.empty()) {
 		if (!CriticalMutex::all_frozen) {
-			physics_update(deltaTime);
+			physics_update(delta_time);
 			
 			ct.for_deletion.insert(for_deletion.begin(), for_deletion.end());
 			ct.exiting_actors.insert(exiting_actors.begin(), exiting_actors.end());
@@ -373,9 +381,13 @@ void PhysicsChunk::physics_update(float delta_time)
 				//auto start = std::chrono::high_resolution_clock::now();
 				///std::cout << "locked b1 & b2" << std::endl;
 				//Complex Maths
+			auto d = sqrt(Ball::magsq((b2.pos - b1.pos)));
 			const auto normal = -(b2.pos - b1.pos) / sqrt(Ball::magsq((b2.pos - b1.pos)));
 			const auto tangent = sf::Vector2f(-normal.y, normal.x);
-
+			if (d == 0) {
+				continue;
+			}
+			
 
 			const auto tan_dp1 = (b1.vel.x) * tangent.x + (b1.vel.y) * tangent.y;
 			const auto tan_dp2 = (b2.vel.x) * tangent.x + (b2.vel.y) * tangent.y;

@@ -7,6 +7,7 @@ class VeganActor : public Actor
 public:
 	sf::Vector2f desired_vector;
 	int turn_countdown;
+	int held_plant;
 	float wander_angle;
 	float max_turn;
 	float max_speed;

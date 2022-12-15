@@ -43,6 +43,7 @@ public:
 	PhysicsManager(int width, int height, int chunk_width, int chunk_height);
 	static bool is_inside_box(sf::Vector2f pos, sf::Vector2f box_pos, sf::Vector2f box_size);
 	void draw(sf::RenderWindow& window);
+	static std::string round(float f, int deci);
 	void update();
 	std::array<int, 4> place_actor(int b);
 	void add_actor(const std::vector<shared_ptr<Actor>>& actors);

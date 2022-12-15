@@ -32,8 +32,9 @@ VeganActor::VeganActor(const Ball& b) : Actor(b)
 	energy = size;
 	child_starting_energy = 100;
 	child_energy_threshold = rand_range(50, 150)/100.f;
-	mutation_rate = rand_range(10, 100)/1000.f;
+	mutation_rate = rand_range(10, 100)/200.f;
 	mutate();
+	PlantActor::world_nutrition = PlantActor::world_nutrition - energy;
 }
 
 
@@ -71,7 +72,6 @@ VeganActor::VeganActor(const VeganActor& parent) : Actor(parent.ball)
 	energy = parent.child_starting_energy;
 	child_starting_energy = parent.child_starting_energy;
 	child_energy_threshold = parent.child_energy_threshold;
-	energy = 0;
 	mutate();
 }
 
@@ -90,9 +90,9 @@ void VeganActor::mutate()
 	sight_range = mutate(sight_range);
 	if (sight_range < 10)
 		sight_range = 10;
-	mutation_rate = mutate(mutation_rate);
 	child_starting_energy = mutate(child_starting_energy);
 	child_energy_threshold = mutate(child_energy_threshold);
+	mutation_rate = mutate(mutation_rate);
 
 
 
@@ -143,6 +143,8 @@ void VeganActor::update(float delta_time)
 {
 	std::lock_guard<std::mutex> lck(*mutex);
 
+
+
 	if(selected)
 	{
 		std::cout << "ID: " << id << std::endl;
@@ -167,8 +169,8 @@ void VeganActor::update(float delta_time)
 				{
 					pa->ball.vel = ball.vel;
 					pa->projected_growth -= (size/600) * delta_time;
-					energy += (size / 600) * delta_time * 0.2f;
-					PlantActor::world_nutrition = PlantActor::world_nutrition + (size / 600) * delta_time * 0.8f;
+					energy += (size / 600) * delta_time * 0.25f;
+					PlantActor::world_nutrition = PlantActor::world_nutrition + (size / 600) * delta_time * 0.75f;
 					desired_vector = ball.pos;
 				}
 				// do Child specific stuff
@@ -177,7 +179,7 @@ void VeganActor::update(float delta_time)
 		}
 		//std::cout << sqrt(Ball::magsq(avoid)) << std::endl;
 	}
-	const float spent_energy = (((size / 600) * (size / 600) * (size / 600)) + (Ball::magsq(ball.vel)/(25 * 25)) + sight_range/250) * 0.002 * delta_time;
+	const float spent_energy = (((size / 600) * (size / 600) * (size / 600)) + (Ball::magsq(ball.vel)/(25 * 25)) + sight_range/250.f) * 0.005f * delta_time;
 	PlantActor::world_nutrition = PlantActor::world_nutrition + spent_energy;
 	energy -= spent_energy;
 	if(energy < size/10.f && !for_deletion)
@@ -196,12 +198,11 @@ void VeganActor::update(float delta_time)
 	const auto walls = avoid_walls();
 	if (Ball::magsq(walls) > 0)
 	{
-		if (turn_countdown <= 0)
-		{
-			turn_countdown = rand() % 750;
-			auto ang = atan2f(walls.y, walls.x);
-			wander_angle = ang + (rand() % 200 - 100) / 1000.f;
-		}
+		
+		turn_countdown = rand() % 200;
+		auto ang = atan2f(walls.y, walls.x);
+		wander_angle =facing - ang + (rand() % 200 - 100) / 1000.f;
+		
 	}
 	
 	if(!target)
@@ -228,8 +229,5 @@ void VeganActor::update(float delta_time)
 	ball.acc = steer;
 	facing = atan2f(ball.vel.y, ball.vel.x);
 
-	if (isnan((float)PlantActor::world_nutrition))
-	{
-		std::cout << "Nanned";
-	}
+
 }

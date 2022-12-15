@@ -19,8 +19,8 @@ Ball::Ball()
 	vel = sf::Vector2f();
 	acc = sf::Vector2f();
 	active = false;
-	mass = -1;
-	elasticity = -1;
+	mass = 1;
+	elasticity = 1;
 	friction = 0;
 	always_active = false;
 	collisionStack = std::unordered_map<int, std::tuple<float, sf::Vector2f, sf::Vector2f>>();
@@ -82,6 +82,7 @@ void Ball::update(const float& delta_time)
 		pos += tempPos; // (static_cast<float>(collisionStack.size())) ;
 		//vel /= static_cast<float>(collisionStack.size());
 	}
+
 
 	if (!(vel.x == 0 || vel.y == 0)) {
 		if (magsq(vel) < 0.01 && !always_active) {
@@ -205,8 +206,15 @@ Collision Ball::collide(Ball& ball1, Ball& ball2) {
 			}*/
 
 			const float overlap = 0.5f * (d - ball1.rad - ball2.rad);
-			out.ball1_overlap = -1.1f * overlap * ((ball1_vec) - (ball2_vec)) / d;
-			out.ball2_overlap = -1.1f * overlap * ((ball2_vec) - (ball1_vec)) / d;
+			if (d > 0) {
+				out.ball1_overlap = -1.1f * overlap * ((ball1_vec)-(ball2_vec)) / d;
+				out.ball2_overlap = -1.1f * overlap * ((ball2_vec)-(ball1_vec)) / d;
+			} else
+			{
+
+				out.ball1_overlap = {0, 0};
+				out.ball2_overlap = {0, 0};
+			}
 			out.dist = d;
 		}
 	}

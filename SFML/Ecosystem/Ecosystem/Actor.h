@@ -33,5 +33,5 @@ public:
 	int hit(sf::Vector2f source, float angle, float range,
 	        const std::unordered_map<int, std::shared_ptr<Actor>>& actors) const;
 
-	virtual void update(float deltaTime) = 0;
+	virtual void update(float delta_time) = 0;
 };
