@@ -1,0 +1,205 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Header Files\Physics">
+      <UniqueIdentifier>{a169147e-e3af-4ca2-83e7-2dcb10019c42}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Physics">
+      <UniqueIdentifier>{19d80cbf-cb00-4b16-a941-c271d23978d7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Neat">
+      <UniqueIdentifier>{f9b3fb00-370e-4f23-8401-f69a1c4bfbca}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Neat">
+      <UniqueIdentifier>{52862e83-9c8b-4cae-8f07-2d7aa0b13582}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Physics\Actors">
+      <UniqueIdentifier>{3c58c6f4-6620-4bb3-933f-e2f41b8460ae}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Physics\Actors\Deprecated">
+      <UniqueIdentifier>{a76c3639-efeb-48f7-bca9-c133d494560d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Physics\Threading">
+      <UniqueIdentifier>{68bbd950-b164-434a-9567-bcb84448d34b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Physics\World">
+      <UniqueIdentifier>{c2def047-190e-48cc-8cd8-7a62a6718a03}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Physics\Structs">
+      <UniqueIdentifier>{ab3a26f9-bbc1-4926-a040-574da4239647}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Physics\Objects">
+      <UniqueIdentifier>{e7b554a2-4017-41c0-839d-ac98cddcd648}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Neat\Data Structures">
+      <UniqueIdentifier>{5567f4a3-8770-4dc4-be22-35f8473f0926}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Neat\Genome">
+      <UniqueIdentifier>{b4374147-80f9-417d-8bff-805cadc5ed95}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Neat\Actors">
+      <UniqueIdentifier>{1f939969-62eb-48c7-9ba2-07ae871aeb52}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Neat\Population">
+      <UniqueIdentifier>{428290ee-e9f1-4d54-8c93-8a788b58c7a8}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="PhysicsActor.cpp">
+      <Filter>Source Files\Physics</Filter>
+    </ClCompile>
+    <ClCompile Include="Ball.cpp">
+      <Filter>Source Files\Physics</Filter>
+    </ClCompile>
+    <ClCompile Include="BasicActor.cpp">
+      <Filter>Source Files\Physics</Filter>
+    </ClCompile>
+    <ClCompile Include="ChunkInterface.cpp">
+      <Filter>Source Files\Physics</Filter>
+    </ClCompile>
+    <ClCompile Include="CriticalMutex.cpp">
+      <Filter>Source Files\Physics</Filter>
+    </ClCompile>
+    <ClCompile Include="Drawing.cpp">
+      <Filter>Source Files\Physics</Filter>
+    </ClCompile>
+    <ClCompile Include="PhysicsChunk.cpp">
+      <Filter>Source Files\Physics</Filter>
+    </ClCompile>
+    <ClCompile Include="PhysicsManager.cpp">
+      <Filter>Source Files\Physics</Filter>
+    </ClCompile>
+    <ClCompile Include="PlantActor.cpp">
+      <Filter>Source Files\Physics</Filter>
+    </ClCompile>
+    <ClCompile Include="Source.cpp">
+      <Filter>Source Files\Physics</Filter>
+    </ClCompile>
+    <ClCompile Include="VeganActor.cpp">
+      <Filter>Source Files\Physics</Filter>
+    </ClCompile>
+    <ClCompile Include="XORActor.cpp">
+      <Filter>Source Files\Neat</Filter>
+    </ClCompile>
+    <ClCompile Include="Node.cpp">
+      <Filter>Source Files\Neat</Filter>
+    </ClCompile>
+    <ClCompile Include="Genome.cpp">
+      <Filter>Source Files\Neat</Filter>
+    </ClCompile>
+    <ClCompile Include="NeatActor.cpp">
+      <Filter>Source Files\Neat</Filter>
+    </ClCompile>
+    <ClCompile Include="Actor.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="CriticalMutex.h">
+      <Filter>Header Files\Physics\Threading</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="NeatConfig.h">
+      <Filter>Header Files\Neat</Filter>
+    </ClInclude>
+    <ClInclude Include="Actor.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="PhysicsActor.h">
+      <Filter>Header Files\Physics\Actors</Filter>
+    </ClInclude>
+    <ClInclude Include="VeganActor.h">
+      <Filter>Header Files\Physics\Actors\Deprecated</Filter>
+    </ClInclude>
+    <ClInclude Include="PlantActor.h">
+      <Filter>Header Files\Physics\Actors\Deprecated</Filter>
+    </ClInclude>
+    <ClInclude Include="BasicActor.h">
+      <Filter>Header Files\Physics\Actors\Deprecated</Filter>
+    </ClInclude>
+    <ClInclude Include="PhysicsChunk.h">
+      <Filter>Header Files\Physics\World</Filter>
+    </ClInclude>
+    <ClInclude Include="ChunkInterface.h">
+      <Filter>Header Files\Physics\Threading</Filter>
+    </ClInclude>
+    <ClInclude Include="PhysicsManager.h">
+      <Filter>Header Files\Physics\World</Filter>
+    </ClInclude>
+    <ClInclude Include="Border.h">
+      <Filter>Header Files\Physics\Structs</Filter>
+    </ClInclude>
+    <ClInclude Include="Collision.h">
+      <Filter>Header Files\Physics\Structs</Filter>
+    </ClInclude>
+    <ClInclude Include="Ball.h">
+      <Filter>Header Files\Physics\Objects</Filter>
+    </ClInclude>
+    <ClInclude Include="BiMap.h">
+      <Filter>Header Files\Neat\Data Structures</Filter>
+    </ClInclude>
+    <ClInclude Include="RandomSelectMap.h">
+      <Filter>Header Files\Neat\Data Structures</Filter>
+    </ClInclude>
+    <ClInclude Include="WeightedRandomSelectMap.h">
+      <Filter>Header Files\Neat\Data Structures</Filter>
+    </ClInclude>
+    <ClInclude Include="Connection.h">
+      <Filter>Header Files\Neat\Genome</Filter>
+    </ClInclude>
+    <ClInclude Include="Node.h">
+      <Filter>Header Files\Neat\Genome</Filter>
+    </ClInclude>
+    <ClInclude Include="NodeGene.h">
+      <Filter>Header Files\Neat\Genome</Filter>
+    </ClInclude>
+    <ClInclude Include="Genome.h">
+      <Filter>Header Files\Neat\Genome</Filter>
+    </ClInclude>
+    <ClInclude Include="NeatActor.h">
+      <Filter>Header Files\Neat\Actors</Filter>
+    </ClInclude>
+    <ClInclude Include="XORActor.h">
+      <Filter>Header Files\Neat\Actors</Filter>
+    </ClInclude>
+    <ClInclude Include="Population.h">
+      <Filter>Header Files\Neat\Population</Filter>
+    </ClInclude>
+    <ClInclude Include="Species.h">
+      <Filter>Header Files\Neat\Population</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="circle.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="chevron.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="square.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+  </ItemGroup>
+  <ItemGroup>
+    <Font Include="..\..\ActorCollision\CircleCollision\COMIC.TTF">
+      <Filter>Resource Files</Filter>
+    </Font>
+    <Font Include="..\..\ActorCollision\CircleCollision\BOOKS.OTF">
+      <Filter>Resource Files</Filter>
+    </Font>
+    <Font Include="..\..\ActorCollision\CircleCollision\JADRIEN.OTF">
+      <Filter>Resource Files</Filter>
+    </Font>
+  </ItemGroup>
+</Project>

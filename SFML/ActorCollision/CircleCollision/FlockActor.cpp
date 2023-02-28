@@ -111,7 +111,7 @@ void FlockActor::update()
 		temp.ball.pos = ball.pos;
 		temp.actor_type = actor_type;
 		temp.sprite_color = sprite_color;
-		for_creation = std::make_shared<FlockActor>(temp);
+		for_creation = { std::make_shared<FlockActor>(temp) };
 	}
 
 	if(rand() % 1000 == 0)

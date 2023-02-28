@@ -18,8 +18,8 @@ public:
 	float mass;
 	float elasticity;
 	float friction;
-	static constexpr float max_vel = 400;
-	static constexpr float sqrt_max_vel = 20;
+	static constexpr float max_vel = 1000000;
+	static constexpr float sqrt_max_vel = 1000;
 	bool active;
 	bool always_active;
 

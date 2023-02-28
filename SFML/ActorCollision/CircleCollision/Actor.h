@@ -10,7 +10,7 @@ protected:
 public:
 	//virtual ~Actor() = default;
 	bool for_deletion;
-	std::shared_ptr<Actor> for_creation;
+	std::vector<std::shared_ptr<Actor>> for_creation;
 	Ball ball;
 	int actor_type;
 	int sprite_id;

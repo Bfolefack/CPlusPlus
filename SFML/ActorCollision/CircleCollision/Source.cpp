@@ -11,6 +11,7 @@
 #include "BasicActor.h"
 #include "FlockActor.h"
 #include "PhysicsManager.h"
+#include "PlantActor.h"
 
 using sf::RenderWindow;
 
@@ -23,19 +24,29 @@ int main() {
 	window->setFramerateLimit(144);
 	sf::View view = window->getDefaultView();
 
-	int world_width = 5000;
-	int world_height = 5000;
+	int world_width = 50000;
+	int world_height = 50000;
+
+	PlantActor::nutrition_map = std::unordered_map<int, std::unordered_map<int, int>>();
+	for (int i = 0; i < world_width; i += PlantActor::nutrition_map_size)
+	{
+		for (int j = 0; j < world_height; j += PlantActor::nutrition_map_size)
+		{
+			PlantActor::nutrition_map[i/PlantActor::nutrition_map_size][j/PlantActor::nutrition_map_size] = PlantActor::nutrition_map_default;
+		}
+	}
 
 	std::vector<shared_ptr<Actor>> actors = {};
 	for (int i = 0; i < 10; i++) {
 		std::cout << "Actor: " << i << std::endl;
 		Actor::world_size = { world_width, world_height };
-		Ball b = Ball(5, rand() % world_width, rand() % world_height, 100, 0.9f, 0.03f);
-		actors.push_back(std::make_shared<FlockActor>(FlockActor(b)));
+		Ball b = Ball(5, (rand() % (world_width/1000)) * 1000 + rand() % 1000, (rand() % (world_height / 1000)) * 1000 + rand() % 1000, 100, 0.9f, 0.03f);
+		//for(int i = 0; i < 10; i++)
+		actors.push_back(std::make_shared<PlantActor>(PlantActor(b)));
 	}
 
 
-	PhysicsManager p(world_width, world_height, 250, 250);
+	PhysicsManager p(world_width, world_height, 200, 200);
 	p.add_actor(actors);
 
 

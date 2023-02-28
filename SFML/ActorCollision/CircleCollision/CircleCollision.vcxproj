@@ -22,8 +22,9 @@
     <VCProjectVersion>16.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
     <ProjectGuid>{b9319c7d-0e45-4b8a-ab68-0139b20982f7}</ProjectGuid>
-    <RootNamespace>CircleCollision</RootNamespace>
+    <RootNamespace>ActorCollision</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <ProjectName>ActorCollision</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -149,7 +150,6 @@
     <ClCompile Include="CriticalMutex.cpp" />
     <ClCompile Include="CriticalMutex.h" />
     <ClCompile Include="Drawing.cpp" />
-    <ClCompile Include="FlockActor.cpp" />
     <ClCompile Include="PhysicsChunk.cpp" />
     <ClCompile Include="PhysicsManager.cpp" />
     <ClCompile Include="Source.cpp" />
@@ -162,7 +162,6 @@
     <ClInclude Include="ChunkInterface.h" />
     <ClInclude Include="Collision.h" />
     <ClInclude Include="Drawing.h" />
-    <ClInclude Include="FlockActor.h" />
     <ClInclude Include="PhysicsChunk.h" />
     <ClInclude Include="PhysicsManager.h" />
   </ItemGroup>
@@ -172,6 +171,7 @@
   <ItemGroup>
     <Image Include="circle.png" />
     <Image Include="chevron.png" />
+    <Image Include="square.png" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

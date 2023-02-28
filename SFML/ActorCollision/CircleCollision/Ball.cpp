@@ -162,7 +162,7 @@ bool Ball::isInside(sf::Vector2f v) const
 
 bool Ball::circlesOverlap(sf::Vector2f pos1, float rad1, sf::Vector2f pos2, float rad2)
 {
-	return 1.01 * magsq((pos1 - pos2)) <= (rad1 + rad2) * (rad1 + rad2);
+	return 1 * magsq((pos1 - pos2)) <= (rad1 + rad2) * (rad1 + rad2);
 }
 
 Collision Ball::collide(Ball& ball1, Ball& ball2) {

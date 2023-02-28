@@ -150,7 +150,6 @@
     <ClCompile Include="CriticalMutex.cpp" />
     <ClCompile Include="CriticalMutex.h" />
     <ClCompile Include="Drawing.cpp" />
-    <ClCompile Include="FlockActor.cpp" />
     <ClCompile Include="PhysicsChunk.cpp" />
     <ClCompile Include="PhysicsManager.cpp" />
     <ClCompile Include="PlantActor.cpp" />
@@ -165,7 +164,6 @@
     <ClInclude Include="ChunkInterface.h" />
     <ClInclude Include="Collision.h" />
     <ClInclude Include="Drawing.h" />
-    <ClInclude Include="FlockActor.h" />
     <ClInclude Include="PhysicsChunk.h" />
     <ClInclude Include="PhysicsManager.h" />
     <ClInclude Include="PlantActor.h" />

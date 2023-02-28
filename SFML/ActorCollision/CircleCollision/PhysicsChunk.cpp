@@ -19,6 +19,8 @@
 #include <unordered_set>
 #include <Windows.h>
 
+#include "PlantActor.h"
+
 
 using std::vector;
 using std::queue;
@@ -203,6 +205,7 @@ void PhysicsChunk::compounded_update(std::unique_ptr<CriticalMutex>& mutex)
 
 				for (auto& a : actors)
 				{
+					std::lock_guard<std::mutex> lock1(PlantActor::nutrition_map_mutex);
 					if(a.second != nullptr)
 						a.second->update();
 				}
@@ -442,8 +445,8 @@ void PhysicsChunk::physics_update(float delta_time)
 		if (ray_update_buffer > 10.f)
 			ray_update_buffer = 0;
 		for (auto& b : actors) {
+			std::lock_guard <std::mutex > b_lock(*b.second->mutex);
 			if (b.second->ball.active || b.second->ball.always_active) {
-				std::unique_lock <std::mutex > b_lock(*b.second->mutex);
 				if (ray_update_buffer == 0.f) 
 					b.second->ray_cast(actors);
 				b.second->ball.update(delta_time);
@@ -452,15 +455,15 @@ void PhysicsChunk::physics_update(float delta_time)
 					exit.push(b.first);
 					//remove_actor(b.first);
 				}
-				if(b.second->for_deletion)
-				{
-					for_deletion.push_back(b.first);
-				}
-				if (b.second->for_creation != nullptr)
-				{
-					for_creation.insert(b.second->for_creation);
-					b.second->for_creation = nullptr;
-				}
+			}
+			if (b.second->for_deletion)
+			{
+				for_deletion.push_back(b.first);
+			}
+			if (!b.second->for_creation.empty())
+			{
+				for_creation.insert(b.second->for_creation.begin(), b.second->for_creation.end());
+				b.second->for_creation = {};
 			}
 		}
 

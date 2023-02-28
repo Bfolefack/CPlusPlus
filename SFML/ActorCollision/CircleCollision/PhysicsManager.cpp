@@ -11,6 +11,8 @@
 #include <thread>
 #include <Windows.h>
 
+#include "PlantActor.h"
+
 using std::shared_ptr;
 using std::unordered_map;
 
@@ -45,8 +47,10 @@ PhysicsManager::PhysicsManager(int w, int h, int cw, int ch)
 
 	textures.push_back(sf::Texture());
 	textures.push_back(sf::Texture());
+	textures.push_back(sf::Texture());
 	textures[0].loadFromFile("chevron.png");
 	textures[1].loadFromFile("circle.png");
+	textures[2].loadFromFile("square.png");
 
 	for (int i = 0; i < 2; ++i)
 	{
@@ -128,7 +132,45 @@ void PhysicsManager::draw(sf::RenderWindow& window)
 	auto zoom = window.getView().getSize().x / window.getDefaultView().getSize().x;
 	float min_size = 2;
 	//std::cout << circleTexture.getSize().x << ", " << circleTexture.getSize().y << std::endl;
+
+	//int total = 0;
 	std::lock_guard<std::mutex> lock(manager_mutex);
+	{
+		const auto cTX = textures[2].getSize().x;
+		const auto cTY = textures[2].getSize().y;
+		std::lock_guard<std::mutex> lock2(PlantActor::nutrition_map_mutex);
+		sf::VertexArray va = sf::VertexArray(sf::Quads, PlantActor::nutrition_map.size() * PlantActor::nutrition_map[0].size() * 4);
+		for (auto i : PlantActor::nutrition_map)
+		{
+			for (auto j : i.second)
+			{
+				//total += j.second;
+				sf::Vertex tl;
+				tl.position = sf::Vector2f(i.first * PlantActor::nutrition_map_size, j.first * PlantActor::nutrition_map_size);
+				tl.texCoords = sf::Vector2f(0, 0);
+				tl.color = sf::Color(200 * (1.f * j.second / PlantActor::nutrition_map_default), 200 * (1.f * j.second / PlantActor::nutrition_map_default), 200 * (1.f * j.second / PlantActor::nutrition_map_default));
+				sf::Vertex tr;
+				tr.position = sf::Vector2f(i.first * PlantActor::nutrition_map_size + PlantActor::nutrition_map_size, j.first * PlantActor::nutrition_map_size);
+				tr.texCoords = sf::Vector2f(cTX, 0);
+				tr.color = sf::Color(200 * (1.f * j.second / PlantActor::nutrition_map_default), 200 * (1.f * j.second / PlantActor::nutrition_map_default), 200 * (1.f * j.second / PlantActor::nutrition_map_default));
+				sf::Vertex br;
+				br.position = sf::Vector2f(i.first * PlantActor::nutrition_map_size + PlantActor::nutrition_map_size, j.first * PlantActor::nutrition_map_size + PlantActor::nutrition_map_size);
+				br.texCoords = sf::Vector2f(cTX, cTY);
+				br.color = sf::Color(200 * (1.f * j.second / PlantActor::nutrition_map_default), 200 * (1.f * j.second / PlantActor::nutrition_map_default), 200 * (1.f * j.second / PlantActor::nutrition_map_default));
+				sf::Vertex bl;
+				bl.position = sf::Vector2f(i.first * PlantActor::nutrition_map_size, j.first * PlantActor::nutrition_map_size + PlantActor::nutrition_map_size);
+				bl.texCoords = sf::Vector2f(0, cTY);
+				bl.color = sf::Color(200 * (1.f * j.second / PlantActor::nutrition_map_default), 200 * (1.f * j.second / PlantActor::nutrition_map_default), 200 * (1.f * j.second / PlantActor::nutrition_map_default));
+
+				va.append(tl);
+				va.append(tr);
+				va.append(br);
+				va.append(bl);
+			}
+		}
+		//std::cout << total << std::endl;
+		window.draw(va, &textures[2]);
+	}
 	for (int i = 0; i < texture_groups.size(); i++) {
 		vertex_arrays[i] = sf::VertexArray(sf::Quads, texture_groups[i].size() * 4);
 		const auto cTX = textures[i].getSize().x;
@@ -136,6 +178,10 @@ void PhysicsManager::draw(sf::RenderWindow& window)
 		for (const auto j : texture_groups[i])
 		{
 			const auto actor = actors[j];
+			//if (PlantActor* c = dynamic_cast<PlantActor*>(actor.get()))
+			//{
+			//	total += c->size;
+			//}
 			if (actor != nullptr && is_inside_box(actor->ball.pos, window.getView().getCenter() - (window.getView().getSize() / 2.f), window.getView().getSize()) && actor->ball.rad/zoom > min_size){
 				sf::Vertex tl;
 				tl.position = actor->ball.pos + sf::Vector2f(cosf(3.1415f * 3 / 4 + actor->facing), sinf(3.1415f * 3 / 4 + actor->facing)) * actor->ball.rad;
@@ -318,7 +364,7 @@ void PhysicsManager::update()
 std::array<int, 4> PhysicsManager::place_actor(const int b)
 {
 	const auto actor = actors[b];
-
+	std::lock_guard<std::mutex> lock(*actor->mutex);
 	if(actor->ball.pos.x < 0)
 	{
 		actor->ball.pos.x = 1;
@@ -485,107 +531,7 @@ void PhysicsManager::re_add_actor(std::unordered_set<int> added_actors)
 
 }
 
-//void PhysicsManager::add_actor(
-//  actor)
-//{
-//	actor.setId(actors.size());
-//	auto id = actor.getId();
-//	actors.insert({ id, std::make_shared<Actor>(actor) });
-//	auto arr = place_actor(id);
-//	for (auto i : arr)
-//	{
-//		if (i != -1)
-//		{
-//			auto thread = chunks_to_threads[i];
-//			std::lock_guard<std::mutex> lock(*chunk_threads[thread]->mutex);
-//			if (chunk_threads[thread]->limbo_list.count(i) <= 0)
-//			{
-//				chunk_threads[thread]->limbo_list[i] = std::list<shared_ptr<Actor>>();
-//			}
-//			chunk_threads[thread]->limbo_list[i].push_back(actors[id]);
-//		}
-//	}
-//}
 
-//void PhysicsManager::add_actor(Actor actor)
-//{
-//	add_actor(std::make_shared<Actor>(actor));
-//}
-//
-//void PhysicsManager::re_add_actor(int id)
-//{
-//	auto list = place_actor(id);
-//	auto arr = std::array<std::thread, 4>();
-//
-//
-//	int count = 0;
-//	for (int i = 0; i < list.size(); i++) {
-//		if (list[i] != -1) {
-//			arr[i] = std::thread(&PhysicsManager::threaded_add_actor, std::ref(*chunk_threads[list[i]]->mutex), std::ref(chunk_threads[list[i]]->chunk_interface->limbo_list), actors[id]);
-//		}
-//		else
-//		{
-//			count++;
-//		}
-//	}
-//	while (count < list.size()) {
-//		for (int i = 0; i < list.size(); i++) {
-//			if (list[i] != -1) {
-//				if (arr[i].joinable())
-//				{
-//					count++;
-//					arr[i].join();
-//					list[i] = -1;
-//				}
-//			}
-//		}
-//	}
-//}
-
-//void PhysicsManager::add_actor(shared_ptr<Actor> actor)
-//{
-//	//std::cout << actors.size() << "\n";
-//	actor->getId() = static_cast<int>(actors.size());
-//	actors[static_cast<int>(actors.size())] = std::make_shared<Actor>(* actor);
-//
-//	//auto start = std::chrono::high_resolution_clock::now();
-//
-//	auto list = place_actor(actor->getId());
-//	auto arr = std::array<std::thread, 4>();
-//
-//
-//	int count = 0;
-//	for (int i = 0; i < list.size(); i++) {
-//		if (list[i] != -1) {
-//			arr[i] = std::thread(&PhysicsManager::threaded_add_actor, std::ref(*chunk_threads[list[i]]->mutex), std::ref(chunk_threads[list[i]]->chunk_interface->limbo_list), actor);
-//		} else
-//		{
-//			count++;
-//		}
-//	}
-//	while (count < list.size()) {
-//		for (int i = 0; i < list.size(); i++) {
-//			if (list[i] != -1) {
-//				if (arr[i].joinable())
-//				{
-//					count++;
-//					arr[i].join();
-//					list[i] = -1;
-//				}
-//			}
-//		}
-//	}
-//
-//	//auto end = std::chrono::high_resolution_clock::now();
-//	//std::cout << "Add Actor: " << std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() << " microseconds" << std::endl;
-//}
-
-//void PhysicsManager::threaded_add_actor(std::mutex& mutex, std::list<shared_ptr<Actor>>& limbo_list, shared_ptr<Actor> actor)
-//{
-//	std::unique_lock<std::mutex> lock(mutex);
-//	limbo_list.push_back(actor);
-//	//return;
-//}
 
 int PhysicsManager::get_chunk(sf::Vector2f vec) const
 {

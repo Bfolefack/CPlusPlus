@@ -45,9 +45,6 @@
     <ClCompile Include="BasicActor.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="FlockActor.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="PlantActor.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -81,9 +78,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="BasicActor.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="FlockActor.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="PlantActor.h">
