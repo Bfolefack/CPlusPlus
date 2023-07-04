@@ -6,7 +6,7 @@
 #include <unordered_set>
 
 class Actor;
-class PhysicsActor;
+class PhysicsCore;
 class Ball;
 class PhysicsChunk;
 using std::shared_ptr;

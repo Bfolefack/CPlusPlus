@@ -12,19 +12,23 @@ void XORActor::act()
 
 	//const float left = (rand() % 1000)/1000.f;
 	//const float right = (rand() % 1000)/1000.f;
-	const float left = (rand() % 2);
-	const float right = (rand() % 2);
+	//const float left = (rand() % 2);
+	//const float right = (rand() % 2);
 	//const float answer = sqrt((left - 0.5) * (left - 0.5) + (right - 0.5) * (right - 0.5)) ;
-	const float answer = abs(left - right);
-	
-	auto out = genome.feed_forward({ (float)left, (float)right });
+	for (float left = 0; left < 1; left += 0.1) {
+		for (float right = 0; right < 1; right += 0.1f) {
+			const float answer = abs(left - right);
 
-	if (out[0] > 1)
-		out[0] = 1;
-	else if(out[0] < 0)
-		out[0] = 0;
-	const auto error = abs(out[0] - answer);
-	epoch_fitness += 1 - error * error;
+			auto out = genome.feed_forward({ (float)left, (float)right });
+
+			//if (out[0] > 0.999)
+			//	out[0] = 0.999;
+			//else if (out[0] < 0)
+			//	out[0] = 0;
+			const auto error = abs(out[0] - answer);
+			epoch_fitness += 1 - error * error;
+		}
+	}
 
 	
 }
@@ -38,7 +42,7 @@ XORActor* XORActor::breed(NeatActor* other)
 
 double XORActor::calculate_fitness()
 {
-	batch_fitness = (batch_fitness * batch_fitness * batch_fitness + fitness_noise() * 0.1) /(genome.connections.size() + 100);
+	batch_fitness = (batch_fitness * batch_fitness * batch_fitness + fitness_noise() * 0.1) ;
 	return batch_fitness;
 }
 

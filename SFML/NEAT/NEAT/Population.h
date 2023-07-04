@@ -232,17 +232,19 @@ template <class A>
 void Population<A>::epoch()
 {
 
+
 	++epoch_num;
+	for (const auto& actor : actors)
+	{
+		actor.second->epoch();
+	}
 	if(epoch_num >= NeatConfig::epochs_per_batch)
 	{
 		epoch_num = 0;
 		generation();
 		return;
 	}
-	for(const auto& actor : actors)
-	{
-		actor.second->epoch();
-	}
+	
 }
 
 template <class A>

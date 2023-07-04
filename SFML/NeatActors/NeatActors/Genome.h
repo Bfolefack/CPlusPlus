@@ -26,6 +26,7 @@ public:
 	int layers;
 
 	Genome();
+	Genome(int number);
 
 	//Genome Construction Functions
 	void connect_network();

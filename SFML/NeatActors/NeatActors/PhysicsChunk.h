@@ -17,7 +17,7 @@ struct Collision;
 
 class PhysicsManager;
 struct ChunkInterface;
-class PhysicsActor;
+class PhysicsCore;
 
 using std::vector;
 using std::unordered_map;
@@ -55,7 +55,7 @@ public:
 	void perpetual_update(float delta_time, ChunkInterface& ct, std::mutex& m);
 	static void update(shared_ptr<PhysicsChunk> pc, float delta_time,
 	                   shared_ptr<std::unordered_set<int>>& exiting_actors);
-	//void add_actor(int id, const PhysicsActor& actor);
+	//void add_actor(int id, const PhysicsCore& actor);
 	void add_actor(int id, const shared_ptr<Actor>& actor);
 	void add_actor(const shared_ptr<Actor>& actor);
 	void add_actor(const std::list<shared_ptr<Actor>>& actor);

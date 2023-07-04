@@ -6,5 +6,5 @@ public:
 	int out;
 	int innovationNum;
 	float weight;
-	bool enabled;
+	bool disabled;
 };

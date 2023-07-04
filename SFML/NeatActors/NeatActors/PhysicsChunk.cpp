@@ -3,7 +3,7 @@
 
 #include <array>
 
-#include "PhysicsActor.h"
+#include "PhysicsCore.h"
 #include "Collision.h"
 #include "ChunkInterface.h"
 #include "PhysicsManager.h"
@@ -418,7 +418,7 @@ void PhysicsChunk::physics_update(float delta_time)
 			//std::cout << "Double lock time: " << std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() << " microseconds" << std::endl;
 		//} else
 		//{
-		//	//std::cout << "PhysicsActor Lock Blocked" << std::endl;
+		//	//std::cout << "PhysicsCore Lock Blocked" << std::endl;
 		//}
 		}
 		collision_stack = temp;
@@ -510,9 +510,9 @@ bool PhysicsChunk::isInside(const sf::Vector2f obj_pos)
 	return (obj_pos.x > pos.x && obj_pos.x < pos.x + size.x && obj_pos.y > pos.y && obj_pos.y < pos.y + size.y);
 }
 
-//void PhysicsChunk::add_actor(int id, const PhysicsActor& actor)
+//void PhysicsChunk::add_actor(int id, const PhysicsCore& actor)
 //{
-//	actors.insert({id, std::make_shared<PhysicsActor>(actor) });
+//	actors.insert({id, std::make_shared<PhysicsCore>(actor) });
 //}
 
 void PhysicsChunk::add_actor(int id, const shared_ptr<Actor>& actor)

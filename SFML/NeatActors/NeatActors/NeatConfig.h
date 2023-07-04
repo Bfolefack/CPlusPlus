@@ -7,8 +7,8 @@ public:
 	static constexpr int epochs_per_batch = 5;
 
 	//Network Structure Variables
-	static constexpr int max_inputs = 2;
-	static constexpr int max_outputs = 1;
+	static constexpr int max_inputs = 26;
+	static constexpr int max_outputs = 3;
 	static constexpr int max_nodes = 10000;
 
 	//Network Mutation Variables
@@ -29,6 +29,7 @@ public:
 	static float compatibility_threshold;
 	static constexpr float mismatch_coefficient = 1.f;
 	static constexpr float weight_coefficient = 0.5f;
+	static constexpr float phenotype_coefficient = 0.4f;
 	static constexpr int large_network_threshold = 20;
 
 	//Natural Selection Variables

@@ -1,6 +1,6 @@
 #include "SFML/Graphics.hpp"
 #include "SFML/window.hpp"
-#include "PhysicsActor.h"
+#include "PhysicsCore.h"
 #include "PhysicsChunk.h"
 #include <random>
 #include <iostream>
@@ -13,30 +13,33 @@
 #include "PlantActor.h"
 #include "VeganActor.h"
 #include "Genome.h"
+#include "SmartVeganActor.h"
 
 using sf::RenderWindow;
-int world_width = 50000;
-int world_height = 50000;
+int world_width = 25000;
+int world_height = 25000;
 
 int main() {
 	srand((std::chrono::system_clock::now().time_since_epoch()).count());
 	//RenderWindow real_window(sf::VideoMode(1900, 1000), "Actors");
-	const std::unique_ptr<RenderWindow> window(new RenderWindow(sf::VideoMode(1050, 1050), "Actors"));
+	const std::unique_ptr<RenderWindow> window(new RenderWindow(sf::VideoMode(1900, 1000), "Actors"));
 	
 	window->setFramerateLimit(144);
 	sf::View view = window->getDefaultView();
 
-	PhysicsActor::world_size = { world_width, world_height };
-	PlantActor::world_nutrition = 100000;
+	PhysicsCore::world_size = { world_width, world_height };
+	//PlantActor::world_nutrition = 100000;
 
 	std::vector<shared_ptr<Actor>> actors = {};
-	for (int i = 0; i < 50; i++) {
+	for (int i = 0; i < 100; i++) {
 		std::cout << "VeganActor: " << i << std::endl;
-		Ball b = Ball(5, (rand() % (world_width / 1000)) * 1000 + rand() % 1000, (rand() % (world_height / 1000)) * 1000 + rand() % 1000, 100, 0.9f, 0.03f);
+		const Ball b = Ball(5, (rand() % (world_width / 1000)) * 1000 + rand() % 1000, (rand() % (world_height / 1000)) * 1000 + rand() % 1000, 100, 0.9f, 0.03f);
 		//for(int i = 0; i < 10; i++)
-		actors.push_back(std::make_shared<VeganActor>(VeganActor(b)));
+		actors.push_back(std::make_shared<SmartVeganActor>(SmartVeganActor(b)));
+		//actors.push_back(std::make_shared<VeganActor>(VeganActor(b)));
+
 	}
-	for (int i = 0; i < 20; i++) {
+	for (int i = 0; i < 1000; i++) {
 		std::cout << "PlantActor: " << i << std::endl;
 		Ball b = Ball(5, (rand() % (world_width/1000)) * 1000 + rand() % 1000, (rand() % (world_height / 1000)) * 1000 + rand() % 1000, 100, 0.9f, 0.03f);
 		//for(int i = 0; i < 10; i++)
@@ -46,7 +49,7 @@ int main() {
 	
 	
 
-	PhysicsManager p(world_width, world_height, 2000, 2000);
+	PhysicsManager p(world_width, world_height, 500, 500);
 	p.add_actor(actors);
 	actors.clear();
 
@@ -99,15 +102,21 @@ int main() {
 
 			if (sf::Keyboard::isKeyPressed(sf::Keyboard::Period))
 			{
-				if(PhysicsChunk::time_warp < 32.f)
-					PhysicsChunk::time_warp *= sqrtf(2.f);
+				if (PhysicsChunk::time_warp < 1.f)
+					PhysicsChunk::time_warp *= 1.41421356237;
+				if(PhysicsChunk::time_warp < 30.f)
+					PhysicsChunk::time_warp += 0.5;
 				continue;
 			}
 			if (sf::Keyboard::isKeyPressed(sf::Keyboard::Comma))
 			{
-				PhysicsChunk::time_warp /= sqrtf(2.f);
+				if (PhysicsChunk::time_warp > 1.f)
+					PhysicsChunk::time_warp -= 0.5;
+				else if (PhysicsChunk::time_warp > 0.05f)
+					PhysicsChunk::time_warp /= 1.41421356237;
 				continue;
 			}
+
 
 			if(event.type == sf::Event::MouseWheelScrolled)
 			{
@@ -128,7 +137,7 @@ int main() {
 			if (sf::Keyboard::isKeyPressed(sf::Keyboard::B))
 			{
 				auto mousePos = window->mapPixelToCoords(sf::Mouse::getPosition(*window));
-				//p.add_actor(PhysicsActor(0, 5 + (rand() % 5) * (rand() % 5) * (rand() % 5), mousePos.x, mousePos.y, 0.5f * (rand() % 2 - 0.5), 0.5f * (rand() % 2 - 0.5), 10, .99f));
+				//p.add_actor(PhysicsCore(0, 5 + (rand() % 5) * (rand() % 5) * (rand() % 5), mousePos.x, mousePos.y, 0.5f * (rand() % 2 - 0.5), 0.5f * (rand() % 2 - 0.5), 10, .99f));
 			}
 			if (sf::Keyboard::isKeyPressed(sf::Keyboard::Escape))
 			{
@@ -138,6 +147,8 @@ int main() {
 			window->setView(view);
 			
 		}
+		if (PhysicsChunk::time_warp > 1.f && PhysicsChunk::time_warp < 2.f)
+			PhysicsChunk::time_warp = 1;
 		//Sleep(1);
 		//auto start = std::chrono::high_resolution_clock::now();
 		////p.update();

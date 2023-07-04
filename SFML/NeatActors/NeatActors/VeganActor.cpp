@@ -34,7 +34,7 @@ VeganActor::VeganActor(const Ball& b) : Actor(b)
 	child_energy_threshold = rand_range(50, 150)/100.f;
 	mutation_rate = rand_range(10, 100)/200.f;
 	mutate();
-	PlantActor::world_nutrition = PlantActor::world_nutrition - energy;
+	//PlantActor::world_nutrition = PlantActor::world_nutrition - energy;
 }
 
 
@@ -139,11 +139,46 @@ void VeganActor::loop()
 	}
 }
 
+void VeganActor::hold(std::shared_ptr<Actor> a)
+{
+	if (a != nullptr) {
+		if (const auto pa = dynamic_cast<PlantActor*>(a.get())) {
+
+			//std::lock_guard<std::mutex> lck(*(a->mutex));
+
+			if (holding == nullptr) {
+				if (pa->holder != id && pa->holder != -1)
+				{
+					return;
+				}
+				holding = a;
+			}
+			else if (pa->id != holding->id) {
+				holding->holder = -1;
+				holding->holder_str = 0;
+				holding = nullptr;
+			}
+
+			if (holding != nullptr) {
+				//std::lock_guard<std::mutex> lck(*(holding->mutex));
+				auto d = sqrt(Ball::magsq(ball.pos - holding->ball.pos));
+				//holding->ball.pos = ball.pos + sf::Vector2f{ cos(facing) * d, sin(facing) * d };
+				holding->ball.vel = ball.vel;
+
+
+				energy += (size / 600) * delta_time * 0.25f;
+				pa->projected_growth -= (size / 600) * delta_time * 0.25f;
+			}
+		}
+	}
+}
+
+
 void VeganActor::update(float delta_time)
 {
 	std::lock_guard<std::mutex> lck(*mutex);
 
-
+	this->delta_time = delta_time;
 
 	if(selected)
 	{
@@ -159,33 +194,30 @@ void VeganActor::update(float delta_time)
 	{
 		if (a != nullptr) {
 			neighbors++;
-			if (PlantActor* pa = dynamic_cast<PlantActor*>(a.get()))
+			target = true;
+			auto vec = a->ball.pos - ball.pos;
+			if (const auto pa = dynamic_cast<PlantActor*>(a.get()))
 			{
-				target = true;
-				auto vec = pa->ball.pos - ball.pos;
-
 				desired_vector = vec;
-				if (Ball::magsq(vec) < (ball.rad + pa->ball.rad) * (ball.rad + pa->ball.rad) * 2 && energy < size)
-				{
-					pa->ball.vel = ball.vel;
-					pa->projected_growth -= (size/600) * delta_time;
-					energy += (size / 600) * delta_time * 0.25f;
-					PlantActor::world_nutrition = PlantActor::world_nutrition + (size / 600) * delta_time * 0.75f;
-					desired_vector = ball.pos;
-				}
-				// do Child specific stuff
 			}
+			if (Ball::magsq(vec) < (ball.rad + a->ball.rad) * (ball.rad + a->ball.rad) * 2 && energy < size)
+			{
+				hold(a);
+				//PlantActor::world_nutrition = PlantActor::world_nutrition + (size / 600) * delta_time * 0.75f;
+				
+			}
+			// do Child specific stuff
 			
 		}
 		//std::cout << sqrt(Ball::magsq(avoid)) << std::endl;
 	}
 	const float spent_energy = (((size / 600) * (size / 600) * (size / 600)) + (Ball::magsq(ball.vel)/(25 * 25)) + sight_range/250.f) * 0.005f * delta_time;
-	PlantActor::world_nutrition = PlantActor::world_nutrition + spent_energy;
+	//PlantActor::world_nutrition = PlantActor::world_nutrition + spent_energy;
 	energy -= spent_energy;
 	if(energy < size/10.f && !for_deletion)
 	{
 		for_deletion = true;
-		PlantActor::world_nutrition = PlantActor::world_nutrition + energy;
+		//PlantActor::world_nutrition = PlantActor::world_nutrition + energy;
 	} else if (energy > child_energy_threshold * size && energy > child_starting_energy)
 	{
 		std::shared_ptr<VeganActor> temp = std::make_shared<VeganActor>(VeganActor(*this));
@@ -201,7 +233,7 @@ void VeganActor::update(float delta_time)
 		
 		turn_countdown = rand() % 200;
 		auto ang = atan2f(walls.y, walls.x);
-		wander_angle =facing - ang + (rand() % 200 - 100) / 1000.f;
+		wander_angle = ang;
 		
 	}
 	

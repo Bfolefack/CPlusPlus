@@ -5,7 +5,7 @@
 #include <unordered_set>
 
 class Actor;
-class PhysicsActor;
+class PhysicsCore;
 struct ChunkInterface;
 
 struct CriticalMutex

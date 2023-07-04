@@ -4,7 +4,7 @@
 struct NeatConfig
 {
 public:
-	static constexpr int epochs_per_batch = 5;
+	static constexpr int epochs_per_batch = 1;
 
 	//Network Structure Variables
 	static constexpr int max_inputs = 2;

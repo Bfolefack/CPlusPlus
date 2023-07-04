@@ -1,4 +1,8 @@
 #include "Node.h"
+
+#include <iostream>
+#include <ostream>
+
 #include "NeatConfig.h"
 std::array<int, 9> NeatConfig::activation_weights = {1, 1, 1, 1, 1, 1, 1, 1, 1};
 float NeatConfig::compatibility_threshold = 1.f;

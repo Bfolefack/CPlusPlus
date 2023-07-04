@@ -3,7 +3,7 @@
 #include <memory>
 #include <unordered_map>
 
-#include "NeatActor.h"
+#include "NeatCore.h"
 #include "WeightedRandomSelectMap.h"
 
 
@@ -23,7 +23,7 @@ public:
 	void cull();
 	auto reproduce(float x);
 	void sum_weights();
-	static std::pair<float, float> get_mismatch(std::shared_ptr<A> actor1, std::shared_ptr<A> actor2);
+	static std::tuple<float, float, float> get_mismatch(std::shared_ptr<A> actor1, std::shared_ptr<A> actor2);
 	std::shared_ptr<A> get_random_actor();
 
 	bool operator< (const Species& right) const;
@@ -48,7 +48,7 @@ bool Species<A>::add(const std::shared_ptr<A>& actor)
 	if (actor == nullptr)
 		return false;
 
-	if (is_compatible(actor))
+	if (is_compatible( actor))
 	{
 		actors.place(actor->id, actor, actor->batch_fitness);
 		return true;
@@ -59,18 +59,19 @@ bool Species<A>::add(const std::shared_ptr<A>& actor)
 template <class A>
 bool Species<A>::is_compatible(const std::shared_ptr<A>& interloper)
 {
-	if (representative->size() == 0 && interloper->size() == 0)
+	if (representative->get_network_size() == 0 && interloper->get_network_size() == 0)
 		return true;
-	auto mismatches = get_mismatch(representative, interloper);
-	
+	const auto mismatches = representative->get_mismatch(interloper);
+
 	float flatten = interloper->genome.connections.size() - NeatConfig::large_network_threshold;
 
 	if (flatten < 1)
 		flatten = 1;
-	auto compatibility = (NeatConfig::mismatch_coefficient * mismatches.first / flatten) + (mismatches.second * NeatConfig::weight_coefficient);
+	const auto compatibility = (NeatConfig::mismatch_coefficient * std::get<0>(mismatches) / flatten) + (std::get<1>(mismatches) * NeatConfig::weight_coefficient) + (std::get<2>(mismatches) * NeatConfig::phenotype_coefficient);
 	//std::cout << compatibility << std::endl;
 	return NeatConfig::compatibility_threshold > compatibility;
 }
+
 
 template <class A>
 void Species<A>::clear()
@@ -132,39 +133,7 @@ void Species<A>::sum_weights()
 	actors.sum_weights();
 }
 
-template <class A>
-std::pair<float, float> Species<A>::get_mismatch(std::shared_ptr<A> actor1, std::shared_ptr<A> actor2)
-{
-	std::unordered_set<int> disjoint;
-	std::unordered_set<int> match;
-	
-	for (const auto& gene : actor1->genome.connections)
-	{
-		disjoint.insert(gene.first);
-	}
-	for (const auto& gene : actor2->genome.connections)
-	{
-		if (disjoint.find(gene.first) != disjoint.end())
-		{
-			disjoint.erase(gene.first);
-			match.insert(gene.first);
-		} else
-		{
-			disjoint.insert(gene.first);
-		}
-	}
-	const float mismatch = disjoint.size();
-	
-	if (match.empty())
-		return { mismatch, 500 };
-	float weight_mismatch = 0;
-	for(const int i : match)
-	{
-		weight_mismatch += abs(actor1->genome.connections[i]->weight - actor2->genome.connections[i]->weight);
-	}
-	return { mismatch, weight_mismatch / match.size() };
 
-}
 
 template <class A>
 std::shared_ptr<A> Species<A>::get_random_actor()

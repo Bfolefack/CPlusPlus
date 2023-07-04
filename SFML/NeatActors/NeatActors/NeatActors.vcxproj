@@ -146,9 +146,9 @@
   <ItemGroup>
     <ClCompile Include="Actor.cpp" />
     <ClCompile Include="Genome.cpp" />
-    <ClCompile Include="NeatActor.cpp" />
+    <ClCompile Include="NeatCore.cpp" />
     <ClCompile Include="Node.cpp" />
-    <ClCompile Include="PhysicsActor.cpp" />
+    <ClCompile Include="PhysicsCore.cpp" />
     <ClCompile Include="Ball.cpp" />
     <ClCompile Include="BasicActor.cpp" />
     <ClCompile Include="ChunkInterface.cpp" />
@@ -158,6 +158,7 @@
     <ClCompile Include="PhysicsChunk.cpp" />
     <ClCompile Include="PhysicsManager.cpp" />
     <ClCompile Include="PlantActor.cpp" />
+    <ClCompile Include="SmartVeganActor.cpp" />
     <ClCompile Include="Source.cpp" />
     <ClCompile Include="VeganActor.cpp" />
     <ClCompile Include="XORActor.cpp" />
@@ -167,11 +168,11 @@
     <ClInclude Include="BiMap.h" />
     <ClInclude Include="Connection.h" />
     <ClInclude Include="Genome.h" />
-    <ClInclude Include="NeatActor.h" />
+    <ClInclude Include="NeatCore.h" />
     <ClInclude Include="NeatConfig.h" />
     <ClInclude Include="Node.h" />
     <ClInclude Include="NodeGene.h" />
-    <ClInclude Include="PhysicsActor.h" />
+    <ClInclude Include="PhysicsCore.h" />
     <ClInclude Include="Ball.h" />
     <ClInclude Include="BasicActor.h" />
     <ClInclude Include="Border.h" />
@@ -182,6 +183,7 @@
     <ClInclude Include="PlantActor.h" />
     <ClInclude Include="Population.h" />
     <ClInclude Include="RandomSelectMap.h" />
+    <ClInclude Include="SmartVeganActor.h" />
     <ClInclude Include="Species.h" />
     <ClInclude Include="VeganActor.h" />
     <ClInclude Include="WeightedRandomSelectMap.h" />

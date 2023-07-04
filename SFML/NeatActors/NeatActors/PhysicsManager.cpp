@@ -1,7 +1,7 @@
 #include "CriticalMutex.h"
 #include "PhysicsManager.h"
 #include "ChunkInterface.h"
-#include "PhysicsActor.h"
+#include "PhysicsCore.h"
 #include "PhysicsChunk.h"
 
 #include <array>
@@ -96,7 +96,7 @@ PhysicsManager::PhysicsManager(int w, int h, int cw, int ch)
 		CriticalMutex c;
 
 		//ct.exiting_actors = std::list<int>();
-		//ct.limbo_list = std::list < std::shared_ptr<PhysicsActor>>();
+		//ct.limbo_list = std::list < std::shared_ptr<PhysicsCore>>();
 		//auto ct_ptr = std::make_shared<ChunkInterface>(std::move(ct));
 		//auto ct = ChunkInterface(*i.second, i.first);
 		//ct_ptr->thread = std::make_shared<std::thread>(std::thread(&PhysicsChunk::perpetual_update, i.second, 0.0f, ct_ptr));
@@ -131,16 +131,8 @@ bool PhysicsManager::is_inside_box(sf::Vector2f pos, sf::Vector2f box_pos, sf::V
 	return pos.x > box_pos.x && pos.x < box_pos.x + box_size.x && pos.y > box_pos.y && pos.y < box_pos.y + box_size.y;
 }
 
-void PhysicsManager::draw(sf::RenderWindow& window) 
+void PhysicsManager::display_sprites(sf::RenderWindow& window, float zoom, float min_size, std::vector<int> populations)
 {
-
-	std::lock_guard<std::mutex> lock(manager_mutex);
-	auto zoom = window.getView().getSize().x / window.getDefaultView().getSize().x;
-	float min_size = 3;
-	std::vector<int> populations;
-	//std::cout << circleTexture.getSize().x << ", " << circleTexture.getSize().y << std::endl;
-
-	//int total = 0
 	for (int i = 0; i < texture_groups.size(); i++) {
 		vertex_arrays[i] = sf::VertexArray(sf::Quads, texture_groups[i].size() * 4);
 		const auto cTX = textures[i].getSize().x;
@@ -173,22 +165,6 @@ void PhysicsManager::draw(sf::RenderWindow& window)
 					bl.texCoords = sf::Vector2f(0, cTY);
 					bl.color = actor->sprite_color;
 
-					//if (actor->ball.active)
-					//{
-					//	tl.color = sf::Color::Red;
-					//	tr.color = sf::Color::Red;
-					//	br.color = sf::Color::Red;
-					//	bl.color = sf::Color::Red;
-					//}
-					//else
-					//{
-
-					//	tl.color = sf::Color::White;
-					//	tr.color = sf::Color::White;
-					//	br.color = sf::Color::White;
-					//	bl.color = sf::Color::White;
-					//}
-
 					vertex_arrays[i].append(tl);
 					vertex_arrays[i].append(tr);
 					vertex_arrays[i].append(br);
@@ -198,73 +174,70 @@ void PhysicsManager::draw(sf::RenderWindow& window)
 		}
 		window.draw(vertex_arrays[i], &textures[i]);
 	}
-	{
-		//std::cout << zoom << std::endl;
-		sf::VertexArray zoom_indicators (sf::Quads);
-		const auto cTX = textures[1].getSize().x;
-		const auto cTY = textures[1].getSize().y;
-		
-		for (auto i : actors)
-		{
-			if (i.second != nullptr && is_inside_box(i.second->ball.pos, window.getView().getCenter() - (window.getView().getSize() / 2.f), window.getView().getSize())) {
-				if(i.second->ball.rad/zoom < min_size)
-				{
-					auto actor = i.second;
-					sf::Vertex tl;
-					tl.position = actor->ball.pos + sf::Vector2f(cosf(3.1415f * 3 / 4 + actor->facing), sinf(3.1415f * 3 / 4 + actor->facing)) * zoom * min_size;
-					tl.texCoords = sf::Vector2f(0, 0);
-					tl.color = actor->sprite_color;
-					sf::Vertex tr;
-					tr.position = actor->ball.pos + sf::Vector2f(cosf(3.1415f / 4 + actor->facing), sinf(3.1415f / 4 + actor->facing)) * zoom * min_size;
-					tr.texCoords = sf::Vector2f(cTX, 0);
-					tr.color = actor->sprite_color;
-					sf::Vertex br;
-					br.position = actor->ball.pos + sf::Vector2f(cosf(-3.1415f / 4 + actor->facing), sinf(-3.1415f / 4 + actor->facing)) * zoom * min_size;
-					br.texCoords = sf::Vector2f(cTX, cTY);
-					br.color = actor->sprite_color;
-					sf::Vertex bl;
-					bl.position = actor->ball.pos + sf::Vector2f(cosf(-3.1415f * 3 / 4 + actor->facing), sinf(-3.1415f * 3 / 4 + actor->facing)) * zoom * min_size;
-					bl.texCoords = sf::Vector2f(0, cTY);
-					bl.color = actor->sprite_color;
+}
 
-					zoom_indicators.append(tl);
-					zoom_indicators.append(tr);
-					zoom_indicators.append(br);
-					zoom_indicators.append(bl);
-				}
+void PhysicsManager::draw_zoom_indicators(sf::RenderWindow& window, float zoom, float min_size, sf::VertexArray zoom_indicators, const unsigned cTX, const unsigned cTY)
+{
+	for (auto i : actors)
+	{
+		if (i.second != nullptr && is_inside_box(i.second->ball.pos, window.getView().getCenter() - (window.getView().getSize() / 2.f), window.getView().getSize())) {
+			if(i.second->ball.rad/zoom < min_size)
+			{
+				auto actor = i.second;
+				sf::Vertex tl;
+				tl.position = actor->ball.pos + sf::Vector2f(cosf(3.1415f * 3 / 4 + actor->facing), sinf(3.1415f * 3 / 4 + actor->facing)) * zoom * min_size;
+				tl.texCoords = sf::Vector2f(0, 0);
+				tl.color = actor->sprite_color;
+				sf::Vertex tr;
+				tr.position = actor->ball.pos + sf::Vector2f(cosf(3.1415f / 4 + actor->facing), sinf(3.1415f / 4 + actor->facing)) * zoom * min_size;
+				tr.texCoords = sf::Vector2f(cTX, 0);
+				tr.color = actor->sprite_color;
+				sf::Vertex br;
+				br.position = actor->ball.pos + sf::Vector2f(cosf(-3.1415f / 4 + actor->facing), sinf(-3.1415f / 4 + actor->facing)) * zoom * min_size;
+				br.texCoords = sf::Vector2f(cTX, cTY);
+				br.color = actor->sprite_color;
+				sf::Vertex bl;
+				bl.position = actor->ball.pos + sf::Vector2f(cosf(-3.1415f * 3 / 4 + actor->facing), sinf(-3.1415f * 3 / 4 + actor->facing)) * zoom * min_size;
+				bl.texCoords = sf::Vector2f(0, cTY);
+				bl.color = actor->sprite_color;
+
+				zoom_indicators.append(tl);
+				zoom_indicators.append(tr);
+				zoom_indicators.append(br);
+				zoom_indicators.append(bl);
 			}
-			window.draw(zoom_indicators, &textures[1]);
 		}
+		window.draw(zoom_indicators, &textures[1]);
 	}
-	{
-		auto saved_view = window.getView();
-		window.setView(window.getDefaultView());
+}
 
-		sf::Text speed_text = sf::Text();
-		speed_text.setFont(font);
-		float warp = PhysicsChunk::time_warp;
-		speed_text.setString("Speed: x" + round(warp, 4));
-		speed_text.setCharacterSize(32);
-		speed_text.setFillColor(sf::Color::White);
-		speed_text.setPosition(0, 0);
-		window.draw(speed_text);
+void PhysicsManager::draw_text(sf::RenderWindow& window, float zoom, std::vector<int> populations)
+{
+	sf::Text speed_text = sf::Text();
+	speed_text.setFont(font);
+	float warp = PhysicsChunk::time_warp;
+	speed_text.setString("Speed: x" + round(warp, 4));
+	speed_text.setCharacterSize(32);
+	speed_text.setFillColor(sf::Color::White);
+	speed_text.setPosition(0, 0);
+	window.draw(speed_text);
 
-		sf::Text zoom_text = sf::Text();
-		zoom_text.setFont(font);
-		zoom_text.setString("Zoom: " + round(zoom, 4));
-		zoom_text.setCharacterSize(32);
-		zoom_text.setFillColor(sf::Color::White);
-		zoom_text.setPosition(0, 32 );
-		window.draw(zoom_text);
+	sf::Text zoom_text = sf::Text();
+	zoom_text.setFont(font);
+	zoom_text.setString("Zoom: " + round(zoom, 4));
+	zoom_text.setCharacterSize(32);
+	zoom_text.setFillColor(sf::Color::White);
+	zoom_text.setPosition(0, 32 );
+	window.draw(zoom_text);
 
-		sf::Text energy_text = sf::Text();
-		energy_text.setFont(font);
-		energy_text.setString("World Energy: " + std::to_string((int)PlantActor::world_nutrition));
-		energy_text.setCharacterSize(32);
-		energy_text.setFillColor(sf::Color::White);
-		energy_text.setPosition(0, 64);
-		window.draw(energy_text);
-
+	sf::Text energy_text = sf::Text();
+	energy_text.setFont(font);
+	energy_text.setString("World Energy: " + std::to_string((int)PlantActor::world_nutrition));
+	energy_text.setCharacterSize(32);
+	energy_text.setFillColor(sf::Color::White);
+	energy_text.setPosition(0, 64);
+	window.draw(energy_text);
+	if (populations.size() > 0) {
 		sf::Text plant_text = sf::Text();
 		plant_text.setFont(font);
 		plant_text.setString("Plant Population: " + std::to_string(populations[1]));
@@ -280,6 +253,137 @@ void PhysicsManager::draw(sf::RenderWindow& window)
 		vegan_text.setFillColor(sf::Color::White);
 		vegan_text.setPosition(0, 128);
 		window.draw(vegan_text);
+	}
+}
+
+void PhysicsManager::draw_network(sf::RenderWindow& window, float zoom, Genome g, int x_offset, int y_offset, int network_display_width, int network_display_height)
+{
+	const auto last_layer = g.layers;
+	std::unordered_map<int, std::pair<int, int>> layer_node_numbers{};
+	int node_count = 0;
+	int layer_count = 0;
+	int biggest_layer = 0;
+	for(const auto node : g.network)
+	{
+		if (layer_count != node.xPos)
+		{
+			layer_node_numbers[layer_count] = { 0, node_count };
+			layer_count++;
+			biggest_layer = node_count > biggest_layer ? node_count : biggest_layer;
+			node_count = 0;
+		}
+		node_count++;
+	}
+	layer_node_numbers[layer_count] = { 0, node_count };
+	biggest_layer = node_count > biggest_layer ? node_count : biggest_layer;
+
+	std::unordered_map<int, std::pair<float, sf::Vector2f>> node_positions{};
+	for (const auto& node : g.nodes)
+	{
+		node_count = layer_node_numbers[node.second->xPos].first;
+		layer_node_numbers[node.second->xPos].first++;
+		const auto layer_size = layer_node_numbers[node.second->xPos].second;
+		node_positions[node.first] = { node.second->activatedSum, sf::Vector2f(((float)node.second->xPos/last_layer) * network_display_width + x_offset, ((node_count + 1.f)/(layer_size + 1.f)) * network_display_height + y_offset) };
+	}
+
+
+	int node_size = network_display_height / (biggest_layer * 2);
+	{
+		auto connection_sprites = sf::VertexArray(sf::Quads, g.connections.size() * 4);
+		const auto cTX = textures[2].getSize().x;
+		const auto cTY = textures[2].getSize().y;
+		int connection_size = node_size / 10 > 5 ? node_size / 10 : 5;
+		for(const auto& connection : g.connections)
+		{
+			sf::Vector2f pos1 = node_positions[connection.second->in].second;
+			sf::Vector2f pos2 = node_positions[connection.second->out].second;
+			sf::Color color = connection.second->disabled ?  sf::Color::Black : (connection.second->weight > 0 ? sf::Color::Blue : sf::Color::Red);
+			int connection_width = abs(connection_size * connection.second->weight);
+			connection_width = (connection_width < 1 ? 1 : connection_width);
+			sf::Vertex tl;
+			tl.position = pos1 + sf::Vector2f(0, (float)connection_width/2);
+			tl.texCoords = sf::Vector2f(0, 0);
+			tl.color = color;
+			sf::Vertex tr;
+			tr.position = pos2 + sf::Vector2f(0, (float)connection_width/2);
+			tr.texCoords = sf::Vector2f(cTX, 0);
+			tr.color = color;
+			sf::Vertex br;
+			br.position = pos2 + sf::Vector2f(0, -(float)connection_width/2);
+			br.texCoords = sf::Vector2f(cTX, cTY);
+			br.color = color;
+			sf::Vertex bl;
+			bl.position = pos1 + sf::Vector2f(0, -(float)connection_width/2);
+			bl.texCoords = sf::Vector2f(0, cTY);
+			bl.color = color;
+			connection_sprites.append(tl);
+			connection_sprites.append(tr);
+			connection_sprites.append(br);
+			connection_sprites.append(bl);
+		}
+		window.draw(connection_sprites, &textures[2]);
+	}
+	{
+		auto node_sprites = sf::VertexArray(sf::Quads, g.network.size() * 4);
+		const auto cTX = textures[1].getSize().x;
+		const auto cTY = textures[1].getSize().y;
+		for (const auto& node : node_positions)
+		{
+			sf::Vector2f pos = node.second.second;
+			float color = (node.second.first + 1) * (255 / 2.f);
+			color = color < 0 ? 0 : (color > 255 ? 255 : color);
+			sf::Vertex tl;
+			tl.position = pos + sf::Vector2f(-1 * node_size, -1 * node_size);
+			tl.texCoords = sf::Vector2f(0, 0);
+			tl.color = sf::Color((int)color, (int)color, (int)color);
+			sf::Vertex tr;
+			tr.position = pos + sf::Vector2f(node_size, -1 * node_size);
+			tr.texCoords = sf::Vector2f(cTX, 0);
+			tr.color = sf::Color((int)color, (int)color, (int)color);
+			sf::Vertex br;
+			br.position = pos + sf::Vector2f(node_size, node_size);
+			br.texCoords = sf::Vector2f(cTX, cTY);
+			br.color = sf::Color((int)color, (int)color, (int)color);
+			sf::Vertex bl;
+			bl.position = pos + sf::Vector2f(-1 * node_size, node_size);
+			bl.texCoords = sf::Vector2f(0, cTY);
+			bl.color = sf::Color((int)color, (int)color, (int)color);
+			node_sprites.append(tl);
+			node_sprites.append(tr);
+			node_sprites.append(br);
+			node_sprites.append(bl);
+		}
+		window.draw(node_sprites, &textures[1]);
+	}
+}
+
+void PhysicsManager::draw(sf::RenderWindow& window) 
+{
+	
+	std::lock_guard<std::mutex> lock(manager_mutex);
+	auto zoom = window.getView().getSize().x / window.getDefaultView().getSize().x;
+	float min_size = 3;
+	std::vector<int> populations;
+	//std::cout << circleTexture.getSize().x << ", " << circleTexture.getSize().y << std::endl;
+
+	//int total = 0
+	display_sprites(window, zoom, min_size, populations);
+	{
+		//std::cout << zoom << std::endl;
+		sf::VertexArray zoom_indicators (sf::Quads);
+		const auto cTX = textures[1].getSize().x;
+		const auto cTY = textures[1].getSize().y;
+		
+		draw_zoom_indicators(window, zoom, min_size, zoom_indicators, cTX, cTY);
+	}
+	{
+		auto saved_view = window.getView();
+		window.setView(window.getDefaultView());
+		draw_text(window, zoom, populations);
+		auto viewport_width = window.getView().getSize().x;
+		auto viewport_height = window.getView().getSize().y;
+		if(selectedGenome.layers > 0)
+			draw_network(window, zoom, selectedGenome, viewport_width / 3, 20, viewport_width * (2.f/3) - 20, viewport_height / 3);
 		window.setView(saved_view);
 	}
 	//std::cout << circles.getVertexCount() << std::endl;
@@ -376,13 +480,17 @@ void PhysicsManager::update()
 		}
 
 		//TODO: PLANTACTOR CODE
-		if (PlantActor::world_nutrition > 2000 /*&& rand() % (int)(1/PhysicsChunk::time_warp <= 1 ? 1 : 1 / PhysicsChunk::time_warp) == 0*/)
-		{
-			Ball temp = Ball();
-			temp.pos = { (float)((rand() % (PhysicsActor::world_size.x / 1000)) * 1000 + rand() % 1000), (float)((rand() % (PhysicsActor::world_size.y / 1000)) * 1000 + rand() % 1000) };
-			auto size = rand() % 500 + 200;
-			PlantActor::world_nutrition = PlantActor::world_nutrition - size;
-			for_creation.push_back(std::make_shared<PlantActor>(temp, size));
+		int spawn_rate = 1;
+
+		for (int i = 0; i < spawn_rate; i++) {
+			if (rand() % 10 == 0) {
+				Ball temp = Ball();
+				temp.pos = { (float)((rand() % (PhysicsCore::world_size.x / 1000)) * 1000 + rand() % 1000), (float)((rand() % (PhysicsCore::world_size.y / 1000)) * 1000 + rand() % 1000) };
+				auto size = rand() % 500 + 200;
+				//PlantActor::world_nutrition = PlantActor::world_nutrition - size;
+				for_creation.push_back(std::make_shared<PlantActor>(temp, size));
+			}
+			
 		}
 
 		for (auto i : for_creation)
@@ -602,6 +710,10 @@ void PhysicsManager::select_actor()
 	selectedActor = min_dist_actor;
 	min_dist_actor->selected = true;
 	global_selected_actor = selectedActor->getId();
+	if(!selectedActor->brainless)
+	{
+		selectedGenome = selectedActor->genome;
+	}
 	return;
 }
 

@@ -7,7 +7,6 @@ class VeganActor : public Actor
 public:
 	sf::Vector2f desired_vector;
 	int turn_countdown;
-	int held_plant;
 	float wander_angle;
 	float max_turn;
 	float max_speed;
@@ -19,13 +18,16 @@ public:
 
 	using Actor::Actor;
 	void loop();
+	void hold(std::shared_ptr<Actor> a) override;
 	/*FlockActor();*/
 	void update(float delta_time) override;
-	VeganActor(const Ball& b);
+	
 	void mutate();
 	float mutate(float num) const;
+	
 	static int rand_range(int min, int max);
+
+	VeganActor(const Ball& b);
 	VeganActor(const VeganActor& parent);
-	VeganActor(int w, int h);
 	//~BasicActor() override = default;
 };

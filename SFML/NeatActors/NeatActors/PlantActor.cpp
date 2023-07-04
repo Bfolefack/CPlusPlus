@@ -98,7 +98,7 @@ void PlantActor::update(float delta_time)
 		}
 		if(abs(projected_growth) < 1)
 		{
-			world_nutrition = world_nutrition + projected_growth;
+			//world_nutrition = world_nutrition + projected_growth;
 			projected_growth = 0.f;
 		}
 	}
@@ -106,7 +106,7 @@ void PlantActor::update(float delta_time)
 	if (size + projected_growth < 10 && !for_deletion)
 	{
 		for_deletion = true;
-		world_nutrition = world_nutrition + size + projected_growth;
+		//world_nutrition = world_nutrition + size + projected_growth;
 	}
 
 

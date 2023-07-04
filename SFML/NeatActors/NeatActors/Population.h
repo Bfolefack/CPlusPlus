@@ -130,7 +130,8 @@ void Population<A>::reproduce(float mass_extinction)
 			parent1 = parent2;
 			parent2 = temp;
 		}
-		A temp = *parent1->breed(&(*parent2));
+		Genome temp_genome = *parent1->breed(&(*parent2));
+		A temp = A(temp_genome);
 		temp.id = id;
 		children[id] = std::make_shared<A>(temp);
 		id++;
@@ -167,7 +168,7 @@ void Population<A>::generation()
 	//auto end = std::chrono::high_resolution_clock::now();
 	//std::cout << "Calculating Fitness: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << "ms" << std::endl;
 
-	//std::unordered_map<int, std::shared_ptr<NeatActor>> actors;
+	//std::unordered_map<int, std::shared_ptr<NeatCore>> actors;
 	//if((rand() % 1000)/1000.f < NeatConfig::mass_extinction_threshold)
 	//{
 	//	while()

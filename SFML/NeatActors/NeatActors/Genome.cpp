@@ -9,15 +9,20 @@ std::unordered_set<int> Genome::connection_innovations{};
 
 Genome::Genome()
 {
+	layers = 0;
+}
+
+Genome::Genome(int number)
+{
 	layers = 1;
 	for (int i = 0; i < NeatConfig::max_inputs + 1; ++i)
 	{
-		Node n{i, 0, 0};
+		Node n{ i, 0, 0 };
 		nodes.insert(n.innovation_number, std::make_shared<Node>(n));
 	}
 	for (int i = NeatConfig::max_inputs + 1; i < NeatConfig::max_inputs + 1 + NeatConfig::max_outputs; ++i)
 	{
-		Node n{i, 1, 0};
+		Node n{ i, 1, 0 };
 		nodes.insert(n.innovation_number, std::make_shared<Node>(n));
 	}
 	for (int i = 0; i < NeatConfig::max_inputs + 1; ++i)
@@ -51,7 +56,7 @@ void Genome::add_node()
 	}
 
 	auto og = connections.get_random();
-	if (!og.second->enabled)
+	if (og.second->disabled)
 		return;
 	const int activation = Node::get_activation();
 	int innovation;
@@ -91,7 +96,7 @@ void Genome::add_node()
 	if (innovation != -1) {
 		Node n{ innovation, xPos, activation };
 		nodes.insert(innovation, std::make_shared<Node>(n));
-		og.second->enabled = false;
+		og.second->disabled = true;
 		add_connection(og.second->in, innovation, 1);
 		add_connection(innovation, og.second->out, og.second->weight);
 		//if (nodes[og.second->in])
@@ -193,7 +198,7 @@ void Genome::add_connection()
 void Genome::disable_enable_connection(int id)
 {
 	const auto& connection = connections[id];
-	connection->enabled = !connection->enabled;
+	connection->disabled = !connection->disabled;
 }
 
 void Genome::disable_enable_node(int id)
@@ -203,14 +208,14 @@ void Genome::disable_enable_node(int id)
 	{
 		if (connection.second->in == node->innovation_number || connection.second->out == node->innovation_number)
 		{
-			connection.second->enabled = !connection.second->enabled;
+			connection.second->disabled = !connection.second->disabled;
 		}
 	}
 }
 
 void Genome::perturb_weight(const int& id)
 {
-	if (connections[id]->enabled) {
+	if (!connections[id]->disabled) {
 		const auto perturbation = (1 - NeatConfig::weight_perturbation) + ((rand() % 2000) / 1000.0f) * NeatConfig::weight_perturbation;
 		connections[id]->weight *= perturbation;
 	}
@@ -219,7 +224,7 @@ void Genome::perturb_weight(const int& id)
 void Genome::scramble_weight(const int& id)
 {
 	const auto& connection = connections[id];
-	if (connection->enabled)
+	if (!connection->disabled)
 		connection->weight = (rand() % 2000) / 1000.0f - 1.0f;
 }
 
@@ -233,7 +238,7 @@ Genome Genome::crossover(Genome& dominant, Genome& recessive)
 		bool enabled = false;
 		if (recessive.connections.find(connection.first) != recessive.connections.end())
 		{
-			if (!connection.second->enabled || !recessive.connections[connection.first]->enabled)
+			if (connection.second->disabled || recessive.connections[connection.first]->disabled)
 			{
 				//TODO: ADD TO CONFIG
 				if ((rand() % 100) / 100.0f < 0.5f)
@@ -271,7 +276,7 @@ Genome Genome::crossover(Genome& dominant, Genome& recessive)
 					connection.second->out,
 					connection.second->innovationNum,
 					connection.second->weight,
-					connection.second->enabled
+					connection.second->disabled
 			}));
 		}
 	}
@@ -308,7 +313,9 @@ std::vector<float> Genome::feed_forward(const std::vector<float>& input_values)
 		}
 		for (const auto connection : nodes[node.innovation_number]->outgoingConnections)
 		{
-			nodes[connection % NeatConfig::max_nodes]->weightedSum += connections[connection]->enabled ? nodes[node.innovation_number]->activatedSum * connections[connection]->weight : 0;
+			//if(nodes[node.innovation_number]->activatedSum != 0)
+			//	std::cout << nodes[node.innovation_number]->activatedSum << std::endl;
+			nodes[connection % NeatConfig::max_nodes]->weightedSum += connections[connection]->disabled ?  0 : nodes[node.innovation_number]->activatedSum * connections[connection]->weight;
 		}
 	}
 

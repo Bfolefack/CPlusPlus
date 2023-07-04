@@ -29,11 +29,11 @@ void XORActor::act()
 	
 }
 
-XORActor* XORActor::breed(NeatActor* other)
+Genome XORActor::breed(NeatCore* other)
 {
 	Genome new_genome = Genome::crossover(genome, other->genome);
 	new_genome.mutate();
-	return new XORActor{ new_genome };
+	return new_genome;
 }
 
 double XORActor::calculate_fitness()
@@ -59,11 +59,11 @@ XORActor* XORActor::clone()
 	return &out;
 }
 
-int XORActor::size()
+int XORActor::get_network_size()
 {
 	return genome.connections.size();
 }
 
-XORActor::XORActor() : NeatActor() {}
+XORActor::XORActor() : NeatCore() {}
 
-XORActor::XORActor(const Genome& g) : NeatActor(g) {}
+XORActor::XORActor(const Genome& g) : NeatCore(g) {}

@@ -71,14 +71,11 @@ int main() {
 	std::cout << "Population created" << std::endl;
 	for (int j = 0; j < 10000; ++j) {
 		auto start = std::chrono::high_resolution_clock::now();
-		for (int i = 0; i < 20; ++i)
-		{
-			pop.act();
-		}
+		pop.act();
 		auto end = std::chrono::high_resolution_clock::now();
 		std::cout << "Acting " << j << " took " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << " ms" << std::endl;
 		
-		if (j % 20 == 0) {
+		if (j % 5 == 0) {
 			for (float k = 0.9; k >= 0; k -= 0.01)
 			{
 				for (float l = 0; l < 1; l += 0.01)

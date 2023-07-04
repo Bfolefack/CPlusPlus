@@ -57,7 +57,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="PhysicsActor.cpp">
+    <ClCompile Include="PhysicsCore.cpp">
       <Filter>Source Files\Physics</Filter>
     </ClCompile>
     <ClCompile Include="Ball.cpp">
@@ -84,9 +84,6 @@
     <ClCompile Include="PlantActor.cpp">
       <Filter>Source Files\Physics</Filter>
     </ClCompile>
-    <ClCompile Include="Source.cpp">
-      <Filter>Source Files\Physics</Filter>
-    </ClCompile>
     <ClCompile Include="VeganActor.cpp">
       <Filter>Source Files\Physics</Filter>
     </ClCompile>
@@ -99,7 +96,7 @@
     <ClCompile Include="Genome.cpp">
       <Filter>Source Files\Neat</Filter>
     </ClCompile>
-    <ClCompile Include="NeatActor.cpp">
+    <ClCompile Include="NeatCore.cpp">
       <Filter>Source Files\Neat</Filter>
     </ClCompile>
     <ClCompile Include="Actor.cpp">
@@ -107,6 +104,12 @@
     </ClCompile>
     <ClCompile Include="CriticalMutex.h">
       <Filter>Header Files\Physics\Threading</Filter>
+    </ClCompile>
+    <ClCompile Include="Source.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="SmartVeganActor.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -116,7 +119,7 @@
     <ClInclude Include="Actor.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="PhysicsActor.h">
+    <ClInclude Include="PhysicsCore.h">
       <Filter>Header Files\Physics\Actors</Filter>
     </ClInclude>
     <ClInclude Include="VeganActor.h">
@@ -167,7 +170,7 @@
     <ClInclude Include="Genome.h">
       <Filter>Header Files\Neat\Genome</Filter>
     </ClInclude>
-    <ClInclude Include="NeatActor.h">
+    <ClInclude Include="NeatCore.h">
       <Filter>Header Files\Neat\Actors</Filter>
     </ClInclude>
     <ClInclude Include="XORActor.h">
@@ -178,6 +181,9 @@
     </ClInclude>
     <ClInclude Include="Species.h">
       <Filter>Header Files\Neat\Population</Filter>
+    </ClInclude>
+    <ClInclude Include="SmartVeganActor.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

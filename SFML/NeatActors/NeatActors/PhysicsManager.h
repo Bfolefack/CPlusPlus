@@ -6,8 +6,8 @@
 #include <SFML/Graphics.hpp>
 #include "ChunkInterface.h"
 #include "CriticalMutex.h"
-#include "NeatActor.h"
-#include "PhysicsActor.h"
+#include "NeatCore.h"
+#include "PhysicsCore.h"
 #include "Population.h"
 
 
@@ -28,6 +28,7 @@ public:
 	sf::Vector2f mousePos;
 	shared_ptr<Actor> selectedActor;
 	shared_ptr<Actor> velSelectedActor;
+	Genome selectedGenome;
 	int chunk_width;
 	int chunk_height;
 	int height;
@@ -48,13 +49,18 @@ public:
 
 	PhysicsManager(int width, int height, int chunk_width, int chunk_height);
 	static bool is_inside_box(sf::Vector2f pos, sf::Vector2f box_pos, sf::Vector2f box_size);
+	void display_sprites(sf::RenderWindow& window, float zoom, float min_size, std::vector<int> populations);
+	void draw_zoom_indicators(sf::RenderWindow& window, float zoom, float min_size, sf::VertexArray zoom_indicators,
+	                          unsigned cTX, unsigned cTY);
+	void draw_text(sf::RenderWindow& window, float zoom, std::vector<int> populations);
+	void draw_network(sf::RenderWindow& window, float zoom, Genome g, int x_offset, int y_offset, int network_display_width, int network_display_height);
 	void draw(sf::RenderWindow& window);
 	static std::string round(float f, int deci);
 	void update();
 	std::array<int, 4> place_actor(int b);
 	void add_actor(const std::vector<shared_ptr<Actor>>& actors);
 	void re_add_actor(std::unordered_set<int> added_actors);
-	//void add_actor(PhysicsActor& actor);
+	//void add_actor(PhysicsCore& actor);
 	void re_add_actor(int id);
 	void add_actor(shared_ptr<Actor> actor);
 	static void threaded_add_actor(std::mutex& mutex, std::list<shared_ptr<Actor>>& limbo_list, shared_ptr<Actor> actor);
